@@ -22,7 +22,7 @@ setup(
     packages=find_packages(),
     package_data={
         "pinax.lms.activities": [
-            "templates/pinax/lms/activities/*"
+            "templates/activities/*"
         ]
     },
     test_suite="runtests.runtests",
