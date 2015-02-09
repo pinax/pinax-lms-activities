@@ -163,7 +163,7 @@ def staff_dashboard(request):
             "activity_occurrence_states": activity_occurrence_states,
             "completed_activity_occurrence_states": completed_activity_occurrence_states,
         })
-    return render(request, "staff/dashboard.html", {
+    return render(request, "staff_dashboard.html", {
         "users": User.objects.all(),
         "activity_states": ActivityState.objects.all(),
         "activity_occurrence_states": ActivityOccurrenceState.objects.all(),
@@ -180,7 +180,7 @@ def staff_activity_detail(request, slug):
     activity_states = ActivityState.objects.filter(activity_slug=slug)
     activity_occurrence_states = ActivityOccurrenceState.objects.filter(activity_slug=slug)
 
-    return render(request, "staff/activity_detail.html", {
+    return render(request, "staff_activity_detail.html", {
         "activity_states": activity_states,
         "activity_occurrence_states": activity_occurrence_states,
     })
