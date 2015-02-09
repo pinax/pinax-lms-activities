@@ -1,0 +1,33 @@
+{% extends "site_base.html" %}
+
+{% load bootstrap_tags %}
+
+{% block head_title %}{{ title }}{% endblock %}
+
+{% block body_class %}two-choice-quiz-variant{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <header>
+                <h1>{{ title }}{% if question_number %}<span class="question-number">question {{ question_number }}/{{ num_questions }}</span>{% endif %}</h1>
+                <div class="description">{{ description }}</div>
+            </header>
+
+            <form method="post" action=".">
+                {% csrf_token %}
+                <input type="hidden" name="question_number" value="{{ question_number }}">
+                <div class="question">what is the <span>{{ question.1 }}</span> of <span>{{ question.0 }}</span>?</div>
+                <div class="answers">
+                    <p>
+                        <button class="btn btn-default" name="answer" value="left">{{ question.2.0 }}</button>
+                        <button class="btn btn-default" name="answer" value="right">{{ question.2.1 }}</button>
+                    </p>
+                    <p>
+                        <button class="btn btn-xs btn-default" name="answer" value="unknown">don't know</button>
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
