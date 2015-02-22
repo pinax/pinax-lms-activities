@@ -1,0 +1,42 @@
+{% extends "site_base.html" %}
+
+{% block head_title %}{{ title }}{% endblock %}
+
+{% block body_class %}short-answer-quiz{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <header>
+                <h1>{{ title }} <span class="question-number">COMPLETED</span></h1>
+                <div class="description">{{ description }}</div>
+            </header>
+
+            <table class="results-table">
+                {% for question,answer in results %}
+                    <tr>
+                        <td class="question">{% include answer_template with question=question.0 %}</td>
+                        <td class="answer">{{ question.1 }}</td>
+                        <td>
+                            {% if answer == question.1 %}
+                                <span class="correct">Correct!</span>
+                            {% elif answer == None %}
+                                <span class="incorrect">Didn't know</span>
+                            {% else %}
+                                <span class="incorrect">You said {{ answer }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+
+            <form action="{% url 'activity_start' slug %}" method="post">
+                {% csrf_token %}
+                <div class="activity-return">
+                    <button class="btn btn-primary">Repeat Activity</button>
+                    <a href="{% url 'dashboard' %}" class="btn btn-default">Return to Activity List</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

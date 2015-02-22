@@ -279,3 +279,83 @@ class TwoChoiceLikertWithAnswersQuiz(QuizWithAnswers):
     completed_template_name = "activities/two_choice_with_answers_quiz_completed.html"
     question_template = "activities/_question.html"
     valid_answer = ["L2", "L1", "0", "R1", "R2"]
+
+
+class ShortAnswerQuiz(Quiz):
+
+    template_name = "activities/short_answer_quiz.html"
+    completed_template_name = "activities/short_answer_quiz_completed.html"
+    question_template = "activities/_question.html"
+    answer_template = "activities/_question.html"
+
+    def previous_question_answer(self, data):
+        previous_question = None
+        previous_answer = None
+        if data["question_number"] > 0:
+            previous_question = data["questions"][data["question_number"] - 1]
+            previous_answer = data["answer_%d" % (data["question_number"] - 1)]
+        return previous_question, previous_answer
+
+    def handle_request(self, request):
+        data = self.get_data()
+        if data is None:
+            messages.info(request, "{} activity already completed.".format(self.title))
+            return redirect("dashboard")
+
+        question = data["questions"][data["question_number"]]
+
+        previous_question, previous_answer = self.previous_question_answer(data)
+
+        if request.method == "POST":
+            if request.POST.get("question_number") == str(data["question_number"] + 1):
+                answer = request.POST.get("answer")
+
+                self.occurrence_state.data.update({"answer_%d" % data["question_number"]: answer})
+                self.occurrence_state.data.update({"question_number": data["question_number"] + 1})
+
+                if data["question_number"] == len(data["questions"]):
+                    self.occurrence_state.mark_completed()
+
+                    return redirect("activity_completed", self.occurrence_state.activity_slug)
+                else:
+                    self.occurrence_state.save()
+
+                    return redirect("activity_play", self.occurrence_state.activity_slug)
+
+        ctx = {
+            "title": self.title,
+            "description": self.description,
+            "help_text": getattr(self, "help_text", None),
+            "question_number": data["question_number"] + 1,
+            "num_questions": len(data["questions"]),
+            "question": question,
+            "previous_question": previous_question,
+            "previous_answer": previous_answer,
+            "question_template": self.question_template,
+            "answer_template": self.answer_template,
+        }
+        ctx.update(self.extra_context)
+
+        return render(request, self.template_name, ctx)
+
+    def completed(self, request):
+
+        data = self.occurrence_state.data
+
+        results = []
+
+        for i, question in enumerate(data["questions"]):
+            answer = data["answer_%d" % i]
+            results.append((question, answer))
+
+        ctx = {
+            "title": self.title,
+            "description": self.description,
+            "help_text": getattr(self, "help_text", None),
+            "results": results,
+            "slug": self.activity_state.activity_slug,
+            "answer_template": self.answer_template,
+        }
+        ctx.update(self.extra_context)
+
+        return render(request, self.completed_template_name, ctx)
