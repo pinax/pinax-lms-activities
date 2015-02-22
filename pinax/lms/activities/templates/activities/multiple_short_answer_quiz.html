@@ -1,0 +1,26 @@
+{% extends "site_base.html" %}
+
+{% block head_title %}{{ title }}{% endblock %}
+
+{% block body_class %}short-answer-quiz{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <header>
+                <h1>{{ title }}{% if question_number %}<span class="question-number">question {{ question_number }}/{{ num_questions }}</span>{% endif %}</h1>
+                <div class="description">{{ description }}</div>
+            </header>
+
+            <form method="post" action=".">
+                {% csrf_token %}
+                <input type="hidden" name="question_number" value="{{ question_number }}">
+                <div class="question" style="font-size: 24pt;">{{ question.0 }}</div>
+                {% for f in question.1 %}
+                    <input type="text" name="answer_{{ forloop.counter0 }}" style="font-size: 24pt;" autocomplete="off" placeholder="{{ f.0 }}"><br>
+                {% endfor %}
+                <button class="btn btn-default">Submit</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

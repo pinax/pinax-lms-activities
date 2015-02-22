@@ -359,3 +359,74 @@ class ShortAnswerQuiz(Quiz):
         ctx.update(self.extra_context)
 
         return render(request, self.completed_template_name, ctx)
+
+
+class MultipleShortAnswerQuiz(Quiz):
+
+    template_name = "activities/multiple_short_answer_quiz.html"
+    completed_template_name = "activities/multiple_short_answer_quiz_completed.html"
+    question_template = "activities/_question.html"
+    answer_template = "activities/_question.html"
+
+    def handle_request(self, request):
+        data = self.get_data()
+        if data is None:
+            messages.info(request, "{} activity already completed.".format(self.title))
+            return redirect("dashboard")
+
+        question = data["questions"][data["question_number"]]
+
+        if request.method == "POST":
+            if request.POST.get("question_number") == str(data["question_number"] + 1):
+                answers = [None] * len(question[1])
+                for key, value in request.POST.items():
+                    if key.startswith("answer_"):
+                        answers[int(key.split("_")[1])] = value
+
+                self.occurrence_state.data.update({"answer_%d" % data["question_number"]: answers})
+                self.occurrence_state.data.update({"question_number": data["question_number"] + 1})
+
+                if data["question_number"] == len(data["questions"]):
+                    self.occurrence_state.mark_completed()
+
+                    return redirect("activity_completed", self.occurrence_state.activity_slug)
+                else:
+                    self.occurrence_state.save()
+
+                    return redirect("activity_play", self.occurrence_state.activity_slug)
+
+        ctx = {
+            "title": self.title,
+            "description": self.description,
+            "help_text": getattr(self, "help_text", None),
+            "question_number": data["question_number"] + 1,
+            "num_questions": len(data["questions"]),
+            "question": question,
+            "question_template": self.question_template,
+            "answer_template": self.answer_template,
+        }
+        ctx.update(self.extra_context)
+
+        return render(request, self.template_name, ctx)
+
+    def completed(self, request):
+
+        data = self.occurrence_state.data
+
+        results = []
+
+        for i, question in enumerate(data["questions"]):
+            answer = data["answer_%d" % i]
+            results.append((question[0], zip(question[1], answer)))
+
+        ctx = {
+            "title": self.title,
+            "description": self.description,
+            "help_text": getattr(self, "help_text", None),
+            "results": results,
+            "slug": self.activity_state.activity_slug,
+            "answer_template": self.answer_template,
+        }
+        ctx.update(self.extra_context)
+
+        return render(request, self.completed_template_name, ctx)
