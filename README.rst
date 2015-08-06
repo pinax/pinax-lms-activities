@@ -1,5 +1,7 @@
 pinax-lms-activities
 ========================
+.. image:: http://slack.pinaxproject.com/badge.svg
+   :target: http://slack.pinaxproject.com/
 
 .. image:: https://img.shields.io/travis/pinax/pinax-lms-activities.svg
     :target: https://travis-ci.org/pinax/pinax-lms-activities
