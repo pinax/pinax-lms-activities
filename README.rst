@@ -19,7 +19,16 @@ pinax-lms-activities
     :target:  https://pypi.python.org/pypi/pinax-lms-activities/
 
 
-framework and base learning activities for Pinax LMS
+pinax-lms-activities provides a framework and base learning activities for Pinax LMS.
+
+Pinax is an open-source platform built on the Django Web Framework. It is an ecosystem of reusable Django apps, themes, and starter project templates. 
+This collection can be found at http://pinaxproject.com.
+
+In order to foster a kind, inclusive, and harassment-free community, the Pinax Project has a code of conduct, which can be found here  http://pinaxproject.com/pinax/code_of_conduct/.
+
+The Pinax documentation is available at http://pinaxproject.com/pinax/.
+
+For updates and news regarding the Pinax Project, please follow us on Twitter at @pinaxproject and check out our blog http://blog.pinaxproject.com.
 
 
 Running the Tests
