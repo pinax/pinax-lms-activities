@@ -29,7 +29,7 @@ This collection can be found at http://pinaxproject.com.
 pinax-lms-activities
 ---------------------
 
-``pinax-lms-activities`` provides a framework and base learning activities for Pinax LMS.
+``pinax-lms-activities`` provides a framework and base learning activities for Pinax LMS. It is a framework for building interactive activities like quizzes, etc. to use in courses for example.
 
 
 Running the Tests
