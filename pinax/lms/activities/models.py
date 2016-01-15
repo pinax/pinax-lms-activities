@@ -143,11 +143,9 @@ def load_path_attr(path):
 def get_activities(user):
 
     activities = {
-        "available": [],
         "inprogress": [],
         "completed": [],
-        "repeatable": [],
-        "unavailable": [],
+        "repeatable": []
     }
 
     for slug, activity_class_path in settings.ACTIVITIES.items():

@@ -13,7 +13,6 @@ from .models import (
     ActivityState,
     ActivityOccurrenceState,
     get_activity_state,
-    availability,
     load_path_attr
 )
 from .signals import (
@@ -33,19 +32,6 @@ def activity_start(request, slug):
         raise Http404
 
     Activity = load_path_attr(activity_class_path)
-
-    available, num_completions = availability(request.user, slug)
-    if not available:
-        log(
-            user=request.user,
-            action="ACTIVITY_ERROR",
-            extra={
-                "error": "not available",
-                "slug": slug,
-            }
-        )
-        # @@@ user message
-        return redirect("dashboard")
 
     activity_state, _ = ActivityState.objects.get_or_create(user=request.user, activity_slug=slug)
 
