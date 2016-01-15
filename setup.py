@@ -27,8 +27,8 @@ setup(
     },
     test_suite="runtests.runtests",
     install_requires=[
-        "eventlog>=0.10.0",
-        "django-jsonfield>=0.8.11"
+        "pinax-eventlog>=1.1.1",
+        "jsonfield>=1.0.3"
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

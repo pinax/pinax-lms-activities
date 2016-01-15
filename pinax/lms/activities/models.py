@@ -1,7 +1,9 @@
+import importlib
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
-from django.utils import importlib, timezone
+from django.utils import timezone
 
 from django.contrib.auth.models import User
 

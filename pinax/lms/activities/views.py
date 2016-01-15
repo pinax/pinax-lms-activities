@@ -1,13 +1,13 @@
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import redirect, render
+from django.views.decorators.http import require_POST
 
 from django.contrib.auth.models import User
 
 from account.decorators import login_required
-from django.views.decorators.http import require_POST
 
-from eventlog.models import log
+from pinax.eventlog.models import log
 
 from .models import (
     ActivityState,
