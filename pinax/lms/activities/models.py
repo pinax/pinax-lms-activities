@@ -143,6 +143,7 @@ def load_path_attr(path):
 def get_activities(user):
 
     activities = {
+        "available": [],
         "inprogress": [],
         "completed": [],
         "repeatable": []
@@ -171,5 +172,6 @@ def get_activities(user):
                 activities["repeatable"].append(activity_entry)
             else:
                 activities["completed"].append(activity_entry)
-
+        else:
+            activities["available"].append(activity_entry)
     return activities
