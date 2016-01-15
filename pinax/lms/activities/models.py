@@ -126,29 +126,6 @@ def get_activity_state(user, activity_slug):
     return activity_state
 
 
-def availability(user, activity_slug):
-
-    adoption_level = user.preference.adoption_level
-
-    # number of people who have completed this at least once
-    num_completions = ActivityState.objects.filter(
-        activity_slug=activity_slug
-    ).exclude(
-        completed_count=0
-    ).count()
-
-    if adoption_level == "bleeding-edge":
-        available = True
-    elif adoption_level == "early-adopter" and num_completions >= 10:
-        available = True
-    elif adoption_level == "maintream" and num_completions >= 100:
-        available = True
-    else:
-        available = False
-
-    return available, num_completions
-
-
 def load_path_attr(path):
     i = path.rfind(".")
     module, attr = path[:i], path[i + 1:]
@@ -196,13 +173,5 @@ def get_activities(user):
                 activities["repeatable"].append(activity_entry)
             else:
                 activities["completed"].append(activity_entry)
-        else:
-            available, num_completions = availability(user, slug)
-            if available:
-                activities["available"].append(activity_entry)
-            else:
-                activity_entry["unavailable"] = True
-                activity_entry["num_completions"] = num_completions
-                activities["unavailable"].append(activity_entry)
 
     return activities
