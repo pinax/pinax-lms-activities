@@ -16,7 +16,7 @@ class UserState(models.Model):
     """
     user = models.OneToOneField(User)
 
-    data = jsonfield.JSONField()
+    data = jsonfield.JSONField(default=dict)
 
     @classmethod
     def for_user(cls, user):
@@ -43,7 +43,7 @@ class ActivityState(models.Model):
     # how many occurences have been completed by this user
     completed_count = models.IntegerField(default=0)
 
-    data = jsonfield.JSONField()
+    data = jsonfield.JSONField(default=dict)
 
     class Meta:
         unique_together = [("user", "activity_slug")]
@@ -100,7 +100,7 @@ class ActivityOccurrenceState(models.Model):
     started = models.DateTimeField(default=timezone.now)
     completed = models.DateTimeField(null=True)  # NULL means in progress
 
-    data = jsonfield.JSONField()
+    data = jsonfield.JSONField(default=dict)
 
     class Meta:
         unique_together = [("user", "activity_slug", "started")]
