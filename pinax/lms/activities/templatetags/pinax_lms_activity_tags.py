@@ -16,6 +16,6 @@ def get_user_stats_for(user):
         "last_event": last_event,
         "adoption_level": user.preference.adoption_level,
         "activities": user.activitystate_set.count(),
-        "occurrences": user.activityoccurrencestate_set.count(),
-        "completed_occurrences": user.activityoccurrencestate_set.filter(completed__isnull=False).count(),
+        "occurrences": user.activitysessionstate_set.count(),
+        "completed_occurrences": user.activitysessionstate_set.filter(completed__isnull=False).count(),
     }

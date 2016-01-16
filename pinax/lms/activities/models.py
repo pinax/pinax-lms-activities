@@ -50,17 +50,17 @@ class ActivityState(models.Model):
     @property
     def in_progress(self):
         try:
-            return ActivityOccurrenceState.objects.get(
+            return ActivitySessionState.objects.get(
                 user=self.user,
                 activity_slug=self.activity_slug,
                 completed=None
             )
-        except ActivityOccurrenceState.DoesNotExist:
+        except ActivitySessionState.DoesNotExist:
             return None
 
     @property
     def latest(self):
-        occurrence, _ = ActivityOccurrenceState.objects.get_or_create(
+        occurrence, _ = ActivitySessionState.objects.get_or_create(
             user=self.user,
             activity_slug=self.activity_slug,
             completed=None
@@ -69,7 +69,7 @@ class ActivityState(models.Model):
 
     @property
     def last_completed(self):
-        completed = ActivityOccurrenceState.objects.filter(
+        completed = ActivitySessionState.objects.filter(
             user=self.user,
             activity_slug=self.activity_slug,
             completed__isnull=False
@@ -81,13 +81,13 @@ class ActivityState(models.Model):
 
     @property
     def all_occurrences(self):
-        return ActivityOccurrenceState.objects.filter(
+        return ActivitySessionState.objects.filter(
             user=self.user,
             activity_slug=self.activity_slug,
         ).order_by("started")
 
 
-class ActivityOccurrenceState(models.Model):
+class ActivitySessionState(models.Model):
     """
     this stores the state of a particular occurence of a particular user
     doing a particular activity.
@@ -137,7 +137,7 @@ def activities_for_user(user):
     for slug, activity_class_path in settings.ACTIVITIES.items():
         activity = load_path_attr(activity_class_path)
         state = get_activity_state(user, slug)
-        user_num_completions = ActivityOccurrenceState.objects.filter(
+        user_num_completions = ActivitySessionState.objects.filter(
             user=user,
             activity_slug=slug,
             completed__isnull=False

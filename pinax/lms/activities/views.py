@@ -11,7 +11,7 @@ from pinax.eventlog.models import log
 
 from .models import (
     ActivityState,
-    ActivityOccurrenceState,
+    ActivitySessionState,
     get_activity_state,
     load_path_attr
 )
@@ -138,7 +138,7 @@ def staff_dashboard(request):
         activity = load_path_attr(activity_class_path)
         activity_states = ActivityState.objects.filter(activity_slug=slug)
         completed_activity_states = activity_states.exclude(completed_count=0)
-        activity_occurrence_states = ActivityOccurrenceState.objects.filter(activity_slug=slug)
+        activity_occurrence_states = ActivitySessionState.objects.filter(activity_slug=slug)
         completed_activity_occurrence_states = activity_occurrence_states.filter(completed__isnull=False)
 
         activities.append({
@@ -152,7 +152,7 @@ def staff_dashboard(request):
     return render(request, "staff_dashboard.html", {
         "users": User.objects.all(),
         "activity_states": ActivityState.objects.all(),
-        "activity_occurrence_states": ActivityOccurrenceState.objects.all(),
+        "activity_occurrence_states": ActivitySessionState.objects.all(),
         "activities": activities,
     })
 
@@ -164,7 +164,7 @@ def staff_activity_detail(request, slug):
         raise Http404
 
     activity_states = ActivityState.objects.filter(activity_slug=slug)
-    activity_occurrence_states = ActivityOccurrenceState.objects.filter(activity_slug=slug)
+    activity_occurrence_states = ActivitySessionState.objects.filter(activity_slug=slug)
 
     return render(request, "staff_activity_detail.html", {
         "activity_states": activity_states,
