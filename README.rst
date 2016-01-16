@@ -59,4 +59,20 @@ Pinax Project Blog and Twitter
 For updates and news regarding the Pinax Project, please follow us on Twitter at @pinaxproject and check out our blog http://blog.pinaxproject.com.
 
 
+Overview
+--------
 
+At the moment, pinax-lms-activities provides both a collection of abstract base classes for building learning activities and a core app for managing retrieval of activities and per user activity state.
+
+The abstract activities subclass each other. For example a TwoChoiceQuiz is a type of quiz where a question is asked and the student has to pick between one of two possible answers provided (the correct answer and a distractor). TwoChoiceQuiz is abstract because it doesn't provide the actual questions, a subclass needs to do that. TwoChoiceQuiz itself subclasses Quiz which subclasses Activity. Activity is the top-level base class for all activities.
+
+When developing a concrete activity there are a number of different facets to consider:
+
+(a) what’s the question / answer mechanic (e.g. two-choice quiz)
+(b) what’s the algorithm for choosing what to ask / generating questions (random? based on what user has seen? or what they found difficult? or based on their "level"?)
+(c) what are the exit criteria for a session ending (do they just get asked 10 questions, is it based on X correct in a row or is it completely open ended)
+(d) what data needs to be stored about a session for scoring / analytics and/or feeding back into (b)
+
+Currently the abstract base activities are really just addressing (a) and the individual concrete activities have to do (b) and (c). There really isn’t much (d) at all yet.
+
+But we want to get there on all these facets.
