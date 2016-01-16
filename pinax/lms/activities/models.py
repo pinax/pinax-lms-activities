@@ -1,13 +1,12 @@
-import importlib
-
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.utils import timezone
 
 from django.contrib.auth.models import User
 
 import jsonfield
+
+from .utils import load_path_attr
 
 
 class UserState(models.Model):
@@ -126,21 +125,7 @@ def get_activity_state(user, activity_slug):
     return activity_state
 
 
-def load_path_attr(path):
-    i = path.rfind(".")
-    module, attr = path[:i], path[i + 1:]
-    try:
-        mod = importlib.import_module(module)
-    except ImportError as e:
-        raise ImproperlyConfigured("Error importing %s: '%s'" % (module, e))
-    try:
-        attr = getattr(mod, attr)
-    except AttributeError:
-        raise ImproperlyConfigured("Module '%s' does not define a '%s'" % (module, attr))
-    return attr
-
-
-def get_activities(user):
+def activities_for_user(user):
 
     activities = {
         "available": [],
