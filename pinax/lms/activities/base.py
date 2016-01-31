@@ -7,7 +7,7 @@ from django.contrib import messages
 from .forms import SurveyForm
 
 
-class Activity(object):
+class ActivityType(object):
 
     def __init__(self, occurrence_state, activity_state):
 
@@ -20,7 +20,7 @@ class Activity(object):
         pass
 
 
-class Survey(Activity):
+class Survey(ActivityType):
 
     def handle_request(self, request):
 
@@ -95,7 +95,7 @@ class MultiPageSurvey(Survey):
         })
 
 
-class Quiz(Activity):
+class Quiz(ActivityType):
 
     extra_context = {}
 
