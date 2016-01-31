@@ -86,6 +86,10 @@ class ActivityState(models.Model):
             activity_slug=self.activity_slug,
         ).order_by("started")
 
+    @classmethod
+    def state_for_user(cls, user, slug):
+        return next(iter(cls.objects.filter(user=user, activity_slug=slug)), None)
+
 
 class ActivitySessionState(models.Model):
     """
@@ -115,16 +119,6 @@ class ActivitySessionState(models.Model):
         activity_state.save()
 
 
-def get_activity_state(user, activity_slug):
-
-    try:
-        activity_state = ActivityState.objects.get(user=user, activity_slug=activity_slug)
-    except ActivityState.DoesNotExist:
-        activity_state = None
-
-    return activity_state
-
-
 def activities_for_user(user):
 
     activities = {
@@ -136,7 +130,7 @@ def activities_for_user(user):
 
     for slug, activity_class_path in settings.ACTIVITIES.items():
         activity = load_path_attr(activity_class_path)
-        state = get_activity_state(user, slug)
+        state = ActivityState.state_for_user(user, slug)
         user_num_completions = ActivitySessionState.objects.filter(
             user=user,
             activity_slug=slug,

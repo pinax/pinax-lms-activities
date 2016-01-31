@@ -12,7 +12,6 @@ from pinax.eventlog.models import log
 from .models import (
     ActivityState,
     ActivitySessionState,
-    get_activity_state,
     load_path_attr
 )
 from .signals import (
@@ -61,7 +60,7 @@ def activity_play(request, slug):
 
     Activity = load_path_attr(activity_class_path)
 
-    activity_state = get_activity_state(request.user, slug)
+    activity_state = ActivityState.state_for_user(request.user, slug)
 
     if activity_state is None:
         log(
@@ -91,7 +90,7 @@ def activity_completed(request, slug):
 
     Activity = load_path_attr(activity_class_path)
 
-    activity_state = get_activity_state(request.user, slug)
+    activity_state = ActivityState.state_for_user(request.user, slug)
 
     if activity_state is None:
         log(
