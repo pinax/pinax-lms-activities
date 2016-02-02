@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
@@ -9,6 +8,8 @@ from account.decorators import login_required
 
 from pinax.eventlog.models import log
 
+from .conf import settings
+from .hooks import hookset
 from .models import (
     ActivityState,
     ActivitySessionState,
@@ -25,7 +26,7 @@ from .signals import (
 @login_required
 def activity_start(request, slug):
 
-    activity_class_path = settings.ACTIVITIES.get(slug)
+    activity_class_path = hookset.activity_class_path(slug)
 
     if activity_class_path is None:
         raise Http404
@@ -53,7 +54,7 @@ def activity_start(request, slug):
 @login_required
 def activity_play(request, slug):
 
-    activity_class_path = settings.ACTIVITIES.get(slug)
+    activity_class_path = hookset.activity_class_path(slug)
 
     if activity_class_path is None:
         raise Http404
@@ -83,7 +84,7 @@ def activity_play(request, slug):
 @login_required
 def activity_completed(request, slug):
 
-    activity_class_path = settings.ACTIVITIES.get(slug)
+    activity_class_path = hookset.activity_class_path(slug)
 
     if activity_class_path is None:
         raise Http404
@@ -133,7 +134,7 @@ def staff_dashboard(request):
 
     activities = []
 
-    for slug, activity_class_path in settings.ACTIVITIES.items():
+    for slug, activity_class_path in hookset.all_activities():
         activity = load_path_attr(activity_class_path)
         activity_states = ActivityState.objects.filter(activity_slug=slug)
         completed_activity_states = activity_states.exclude(completed_count=0)

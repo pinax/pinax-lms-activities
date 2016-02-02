@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -6,6 +5,7 @@ from django.contrib.auth.models import User
 
 import jsonfield
 
+from .hooks import hookset
 from .utils import load_path_attr
 
 
@@ -128,7 +128,7 @@ def activities_for_user(user):
         "repeatable": []
     }
 
-    for slug, activity_class_path in settings.ACTIVITIES.items():
+    for slug, activity_class_path in hookset.all_activities():
         activity = load_path_attr(activity_class_path)
         state = ActivityState.state_for_user(user, slug)
         user_num_completions = ActivitySessionState.objects.filter(
