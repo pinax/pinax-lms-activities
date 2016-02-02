@@ -16,7 +16,7 @@ setup(
     description="framework and base learning activities for Pinax LMS",
     name="pinax-lms-activities",
     long_description=read("README.rst"),
-    version="0.5.0",
+    version="0.6.0",
     url="http://pinax-lms-activities.rtfd.org/",
     license="MIT",
     packages=find_packages(),
@@ -27,6 +27,7 @@ setup(
     },
     test_suite="runtests.runtests",
     install_requires=[
+        "django-appconf>=1.0.1",
         "pinax-eventlog>=1.1.1",
         "jsonfield>=1.0.3"
     ],
