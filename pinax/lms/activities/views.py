@@ -8,7 +8,6 @@ from account.decorators import login_required
 
 from pinax.eventlog.models import log
 
-from .conf import settings
 from .hooks import hookset
 from .models import (
     ActivityState,
