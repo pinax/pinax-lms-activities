@@ -64,7 +64,7 @@ class ActivityView(LoginRequiredMixin, ActivityMixin, View):
         if self.activity_state is None:  # Must mean you are just starting out
             return render("start_activity.html")
         activity = self.get_activity()
-        activity_play_signal.send(sender=ActivityView, slug=self.activity_slug, activity_occurrence_state=self.activity_state.latest, request=self.request)
+        activity_play_signal.send(sender=ActivityView, slug=self.activity_slug, activity_session_state=self.activity_state.latest, request=self.request)
         return activity.handle_get_request(self.request)
 
     def post(self, request, *args, **kwargs):
@@ -89,21 +89,21 @@ def staff_dashboard(request):
         activity = load_path_attr(activity_class_path)
         activity_states = ActivityState.objects.filter(activity_slug=slug)
         completed_activity_states = activity_states.exclude(completed_count=0)
-        activity_occurrence_states = ActivitySessionState.objects.filter(activity_slug=slug)
-        completed_activity_occurrence_states = activity_occurrence_states.filter(completed__isnull=False)
+        activity_session_states = ActivitySessionState.objects.filter(activity_slug=slug)
+        completed_activity_session_states = activity_session_states.filter(completed__isnull=False)
 
         activities.append({
             "slug": slug,
             "title": activity.title,
             "activity_states": activity_states,
             "completed_activity_states": completed_activity_states,
-            "activity_occurrence_states": activity_occurrence_states,
-            "completed_activity_occurrence_states": completed_activity_occurrence_states,
+            "activity_session_states": activity_session_states,
+            "completed_activity_session_states": completed_activity_session_states,
         })
     return render(request, "staff_dashboard.html", {
         "users": User.objects.all(),
         "activity_states": ActivityState.objects.all(),
-        "activity_occurrence_states": ActivitySessionState.objects.all(),
+        "activity_session_states": ActivitySessionState.objects.all(),
         "activities": activities,
     })
 
@@ -115,9 +115,9 @@ def staff_activity_detail(request, slug):
         raise Http404
 
     activity_states = ActivityState.objects.filter(activity_slug=slug)
-    activity_occurrence_states = ActivitySessionState.objects.filter(activity_slug=slug)
+    activity_session_states = ActivitySessionState.objects.filter(activity_slug=slug)
 
     return render(request, "staff_activity_detail.html", {
         "activity_states": activity_states,
-        "activity_occurrence_states": activity_occurrence_states,
+        "activity_session_states": activity_session_states,
     })

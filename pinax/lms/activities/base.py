@@ -14,9 +14,9 @@ class ActivityType(object):
     description = None
     template_name = None
 
-    def __init__(self, occurrence_state, activity_state, activity_url, completed_url):
+    def __init__(self, session_state, activity_state, activity_url, completed_url):
         self.activity_state = activity_state
-        self.occurrence_state = occurrence_state
+        self.session_state = session_state
         self.activity_url = activity_url
         self.completed_url = completed_url
         self.setup()
@@ -48,8 +48,8 @@ class Survey(ActivityType):
         form = SurveyForm(request.POST, questions=self.questions)
 
         if form.is_valid():
-            self.occurrence_state.data.update({"answers": form.cleaned_data})
-            self.occurrence_state.mark_completed()
+            self.session_state.data.update({"answers": form.cleaned_data})
+            self.session_state.mark_completed()
             if self.repeatable:
                 messages.success(request, "{} activity completed. You may repeat it again at any time.".format(self.title))
             else:
@@ -65,7 +65,7 @@ class MultiPageSurvey(Survey):
     template_name = "activities/survey.html"
 
     def setup(self):
-        data = self.occurrence_state.data
+        data = self.session_state.data
         if not data:
             data = {"page": 0}
         elif not data.get("page"):
@@ -101,11 +101,11 @@ class MultiPageSurvey(Survey):
         form = SurveyForm(request.POST, questions=questions)
 
         if form.is_valid():
-            self.occurrence_state.data.update({"answers_%d" % self.data["page"]: form.cleaned_data})
-            self.occurrence_state.data.update({"page": self.data["page"] + 1})
+            self.session_state.data.update({"answers_%d" % self.data["page"]: form.cleaned_data})
+            self.session_state.data.update({"page": self.data["page"] + 1})
 
             if self.data["page"] == len(self.pages):
-                self.occurrence_state.mark_completed()
+                self.session_state.mark_completed()
                 if self.repeatable:
                     messages.success(request, "{} activity completed. You may repeat it again at any time.".format(self.title))
                 else:
@@ -113,7 +113,7 @@ class MultiPageSurvey(Survey):
 
                 return redirect(self.completed_url)
             else:
-                self.occurrence_state.save()
+                self.session_state.save()
 
                 return redirect(self.activity_url)
 
@@ -125,15 +125,15 @@ class Quiz(ActivityType):
     extra_context = {}
 
     def setup(self):
-        if not self.occurrence_state.data:
-            self.occurrence_state.data = {"questions": self.construct_quiz()}
-            self.occurrence_state.save()
-        elif not self.occurrence_state.data.get("questions"):
-            self.occurrence_state.data["questions"] = self.construct_quiz()
-            self.occurrence_state.save()
+        if not self.session_state.data:
+            self.session_state.data = {"questions": self.construct_quiz()}
+            self.session_state.save()
+        elif not self.session_state.data.get("questions"):
+            self.session_state.data["questions"] = self.construct_quiz()
+            self.session_state.save()
 
     def get_data(self):
-        data = self.occurrence_state.data
+        data = self.session_state.data
         if not data:
             data = {"question_number": 0}
         elif not data.get("question_number"):
@@ -168,8 +168,8 @@ class Quiz(ActivityType):
         if request.POST.get("question_number") == str(data["question_number"] + 1):
             answer = request.POST.get("answer")
             if answer in self.valid_answer:
-                self.occurrence_state.data.update({"answer_%d" % data["question_number"]: answer})
-                self.occurrence_state.data.update({"question_number": data["question_number"] + 1})
+                self.session_state.data.update({"answer_%d" % data["question_number"]: answer})
+                self.session_state.data.update({"question_number": data["question_number"] + 1})
 
                 self.valid_response(request, data)
         return render(request)
@@ -177,19 +177,19 @@ class Quiz(ActivityType):
     def valid_response(self, request, data):
         if self.is_complete(data):
             return self.completed(request)
-        self.occurrence_state.save()
+        self.session_state.save()
         return redirect(self.activity_url)
 
     def is_complete(self, data):
         return data["question_number"] == len(data["questions"])
 
     def completed(self, request):
-        self.occurrence_state.mark_completed()
+        self.session_state.mark_completed()
         if self.repeatable:
             messages.success(request, "{} activity completed. You may repeat it again at any time.".format(self.title))
         else:
             messages.success(request, "{} activity completed.".format(self.title))
-        activity_completed.send(sender=self, slug=self.activity_slug, activity_occurrence_state=self.occurrence_state, request=request)
+        activity_completed.send(sender=self, slug=self.activity_slug, activity_session_state=self.session_state, request=request)
         return redirect(self.completed_url)
 
 
@@ -258,15 +258,15 @@ class QuizWithAnswers(Quiz):
             answer = request.POST.get("answer")
 
             if answer in self.valid_answer:
-                self.occurrence_state.data.update({"answer_%d" % data["question_number"]: answer})
-                self.occurrence_state.data.update({"question_number": data["question_number"] + 1})
+                self.session_state.data.update({"answer_%d" % data["question_number"]: answer})
+                self.session_state.data.update({"question_number": data["question_number"] + 1})
 
                 return self.valid_response(request, data)
         return self.render(request)
 
     def completed(self, request):
-        self.occurrence_state.mark_completed()
-        data = self.occurrence_state.data
+        self.session_state.mark_completed()
+        data = self.session_state.data
         results = []
 
         for i, question in enumerate(data["questions"]):
@@ -288,7 +288,7 @@ class QuizWithAnswers(Quiz):
             "answer_template": self.answer_template,
         }
         ctx.update(self.extra_context)
-        activity_completed.send(sender=self, slug=self.activity_slug, activity_occurrence_state=self.occurrence_state, request=request)
+        activity_completed.send(sender=self, slug=self.activity_slug, activity_session_state=self.session_state, request=request)
         return render(request, self.completed_template_name, ctx)
 
 
@@ -356,15 +356,15 @@ class ShortAnswerQuiz(Quiz):
         if request.POST.get("question_number") == str(data["question_number"] + 1):
             answer = request.POST.get("answer")
 
-            self.occurrence_state.data.update({"answer_%d" % data["question_number"]: answer})
-            self.occurrence_state.data.update({"question_number": data["question_number"] + 1})
+            self.session_state.data.update({"answer_%d" % data["question_number"]: answer})
+            self.session_state.data.update({"question_number": data["question_number"] + 1})
 
             return self.valid_response(request, data)
         return self.render(request)
 
     def completed(self, request):
-        self.occurrence_state.mark_completed()
-        data = self.occurrence_state.data
+        self.session_state.mark_completed()
+        data = self.session_state.data
         results = []
 
         for i, question in enumerate(data["questions"]):
@@ -380,7 +380,7 @@ class ShortAnswerQuiz(Quiz):
             "answer_template": self.answer_template,
         }
         ctx.update(self.extra_context)
-        activity_completed.send(sender=self, slug=self.activity_slug, activity_occurrence_state=self.occurrence_state, request=request)
+        activity_completed.send(sender=self, slug=self.activity_slug, activity_session_state=self.session_state, request=request)
         return render(request, self.completed_template_name, ctx)
 
 
@@ -425,15 +425,15 @@ class MultipleShortAnswerQuiz(Quiz):
                 if key.startswith("answer_"):
                     answers[int(key.split("_")[1])] = value
 
-            self.occurrence_state.data.update({"answer_%d" % data["question_number"]: answers})
-            self.occurrence_state.data.update({"question_number": data["question_number"] + 1})
+            self.session_state.data.update({"answer_%d" % data["question_number"]: answers})
+            self.session_state.data.update({"question_number": data["question_number"] + 1})
 
             return self.valid_response(request, data)
         return self.render(request)
 
     def completed(self, request):
-        self.occurrence_state.mark_completed()
-        data = self.occurrence_state.data
+        self.session_state.mark_completed()
+        data = self.session_state.data
         results = []
 
         for i, question in enumerate(data["questions"]):
@@ -449,5 +449,5 @@ class MultipleShortAnswerQuiz(Quiz):
             "answer_template": self.answer_template,
         }
         ctx.update(self.extra_context)
-        activity_completed.send(sender=self, slug=self.activity_slug, activity_occurrence_state=self.occurrence_state, request=request)
+        activity_completed.send(sender=self, slug=self.activity_slug, activity_session_state=self.session_state, request=request)
         return render(request, self.completed_template_name, ctx)

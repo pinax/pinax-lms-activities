@@ -10,7 +10,7 @@
 
     <div class="row counts-row">
         <div class="count col-md-4">Activity States<br><span class="number">{{ activity_states.count }}</span></div>
-        <div class="count col-md-4">Activity Occurrences States<br><span class="number">{{ activity_occurrence_states.count }}</span></div>
+        <div class="count col-md-4">Activity Occurrences States<br><span class="number">{{ activity_session_states.count }}</span></div>
     </div>
 
     <h2>Activities</h2>
@@ -24,7 +24,7 @@
 
     <h2>Users</h2>
 
-    {% for state in activity_occurrence_states %}
+    {% for state in activity_session_states %}
         <div>
             {{ state.user }}
             {{ state.data }}
