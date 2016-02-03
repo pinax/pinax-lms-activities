@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.views.generic import View
@@ -30,6 +31,20 @@ class ActivityMixin(object):
     def create_activity_state(self):
         self.activity_state = ActivityState.objects.create(user=self.request.user, activity_slug=self.activity_slug)
 
+    def get_completed_url(self):
+        return reverse("dashboard")
+
+    def get_activity_url(self):
+        return reverse("activity", kwargs=dict(slug=self.activity_slug))
+
+    def get_activity(self):
+        return self.activity_class(
+            self.activity_state.latest,
+            self.activity_state,
+            activity_url=self.get_activity_url(),
+            completed_url=self.get_completed_url()
+        )
+
     def dispatch(self, request, *args, **kwargs):
         self.request = request
         self.args = args
@@ -38,7 +53,7 @@ class ActivityMixin(object):
         self.activity_class_path = hookset.activity_class_path(kwargs.get("slug"))
         if self.activity_class_path is None:
             raise Http404
-        self.activity_class = self.get_activity()
+        self.activity_class = self.get_activity_class()
         self.activity_state = self.get_activity_state()
         return super(ActivityMixin, self).dispatch(request, *args, **kwargs)
 
@@ -48,7 +63,7 @@ class ActivityView(LoginRequiredMixin, ActivityMixin, View):
     def get(self, request, *args, **kwargs):
         if self.activity_state is None:  # Must mean you are just starting out
             return render("start_activity.html")
-        activity = self.activity_class(self.activity_state.latest, self.activity_state)
+        activity = self.get_activity()
         activity_play_signal.send(sender=ActivityView, slug=self.activity_slug, activity_occurrence_state=self.activity_state.latest, request=self.request)
         return activity.handle_get_request(self.request)
 
@@ -57,8 +72,8 @@ class ActivityView(LoginRequiredMixin, ActivityMixin, View):
             self.create_activity_state()
         if self.activity_state.completed_count == 0:
             activity_start_signal.send(sender=ActivityView, slug=self.activity_slug, activity_state=self.activity_state, request=self.request)
-            return redirect("activity", slug=self.activity_slug)
-        activity = self.activity_class(self.activity_state.latest, self.activity_state)
+            return redirect(self.get_activity_url())
+        activity = self.get_activity()
         return activity.handle_post_request(self.request)
 
 

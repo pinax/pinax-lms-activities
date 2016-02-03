@@ -14,11 +14,11 @@ class ActivityType(object):
     description = None
     template_name = None
 
-    def __init__(self, occurrence_state, activity_state):
-
+    def __init__(self, occurrence_state, activity_state, activity_url, completed_url):
         self.activity_state = activity_state
         self.occurrence_state = occurrence_state
-
+        self.activity_url = activity_url
+        self.completed_url = completed_url
         self.setup()
 
     def setup(self):
@@ -54,7 +54,7 @@ class Survey(ActivityType):
                 messages.success(request, "{} activity completed. You may repeat it again at any time.".format(self.title))
             else:
                 messages.success(request, "{} activity completed.".format(self.title))
-            return redirect("dashboard")
+            return redirect(self.completed_url)
 
         return self.render(request, form=form)
 
@@ -86,7 +86,7 @@ class MultiPageSurvey(Survey):
     def handle_get_request(self, request):
         if self.data["page"] == len(self.pages):
             messages.info(request, "{} activity already completed.".format(self.title))
-            return redirect("dashboard")
+            return redirect(self.completed_url)
 
         questions = self.get_questions()
         form = SurveyForm(questions=questions)
@@ -95,7 +95,7 @@ class MultiPageSurvey(Survey):
     def handle_post_request(self, request):
         if self.data["page"] == len(self.pages):
             messages.info(request, "{} activity already completed.".format(self.title))
-            return redirect("dashboard")
+            return redirect(self.completed_url)
 
         questions = self.get_questions()
         form = SurveyForm(request.POST, questions=questions)
@@ -111,11 +111,11 @@ class MultiPageSurvey(Survey):
                 else:
                     messages.success(request, "{} activity completed.".format(self.title))
 
-                return redirect("dashboard")
+                return redirect(self.completed_url)
             else:
                 self.occurrence_state.save()
 
-                return redirect("activity", self.occurrence_state.activity_slug)
+                return redirect(self.activity_url)
 
         return self.render(request, form=form)
 
@@ -157,13 +157,13 @@ class Quiz(ActivityType):
         data = self.get_data()
         if data is None:
             messages.info(request, "{} activity already completed.".format(self.title))
-            return redirect("dashboard")
+            return redirect(self.completed_url)
 
     def handle_post_request(self, request):
         data = self.get_data()
         if data is None:
             messages.info(request, "{} activity already completed.".format(self.title))
-            return redirect("dashboard")
+            return redirect(self.completed_url)
 
         if request.POST.get("question_number") == str(data["question_number"] + 1):
             answer = request.POST.get("answer")
@@ -178,7 +178,7 @@ class Quiz(ActivityType):
         if self.is_complete(data):
             return self.completed(request)
         self.occurrence_state.save()
-        return redirect("activity", self.occurrence_state.activity_slug)
+        return redirect(self.activity_url)
 
     def is_complete(self, data):
         return data["question_number"] == len(data["questions"])
@@ -190,7 +190,7 @@ class Quiz(ActivityType):
         else:
             messages.success(request, "{} activity completed.".format(self.title))
         activity_completed.send(sender=self, slug=self.activity_slug, activity_occurrence_state=self.occurrence_state, request=request)
-        return redirect("dashboard")
+        return redirect(self.completed_url)
 
 
 class TwoChoiceQuiz(Quiz):
@@ -245,14 +245,14 @@ class QuizWithAnswers(Quiz):
         data = self.get_data()
         if data is None:
             messages.info(request, "{} activity already completed.".format(self.title))
-            return redirect("dashboard")
+            return redirect(self.completed_url)
         return self.render(request)
 
     def handle_post_request(self, request):
         data = self.get_data()
         if data is None:
             messages.info(request, "{} activity already completed.".format(self.title))
-            return redirect("dashboard")
+            return redirect(self.completed_url)
 
         if request.POST.get("question_number") == str(data["question_number"] + 1):
             answer = request.POST.get("answer")
@@ -344,14 +344,14 @@ class ShortAnswerQuiz(Quiz):
         data = self.get_data()
         if data is None:
             messages.info(request, "{} activity already completed.".format(self.title))
-            return redirect("dashboard")
+            return redirect(self.completed_url)
         return self.render(request)
 
     def handle_post_request(self, request):
         data = self.get_data()
         if data is None:
             messages.info(request, "{} activity already completed.".format(self.title))
-            return redirect("dashboard")
+            return redirect(self.completed_url)
 
         if request.POST.get("question_number") == str(data["question_number"] + 1):
             answer = request.POST.get("answer")
@@ -408,14 +408,14 @@ class MultipleShortAnswerQuiz(Quiz):
         data = self.get_data()
         if data is None:
             messages.info(request, "{} activity already completed.".format(self.title))
-            return redirect("dashboard")
+            return redirect(self.completed_url)
         return self.render(request)
 
     def handle_post_request(self, request):
         data = self.get_data()
         if data is None:
             messages.info(request, "{} activity already completed.".format(self.title))
-            return redirect("dashboard")
+            return redirect(self.completed_url)
 
         question = data["questions"][data["question_number"]]
 
