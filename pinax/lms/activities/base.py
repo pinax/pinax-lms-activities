@@ -20,6 +20,7 @@ class ActivityType(object):
         self.activity_url = activity_url
         self.completed_url = completed_url
         self.cancel_url = cancel_url
+        self.description = ""
         self.setup()
 
     def setup(self):

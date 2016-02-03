@@ -9,7 +9,7 @@
         <div class="col-md-8 col-md-offset-2">
             <header>
                 <h1>{{ title }}{% if question_number %}<span class="question-number">question {{ question_number }}/{{ num_questions }}</span>{% endif %}</h1>
-                <div class="description">{{ description }}</div>
+                {% if description %}<div class="description">{{ description }}</div>{% endif %}
             </header>
             <div class="row">
                 <div class="col-md-2">
