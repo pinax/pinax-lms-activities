@@ -34,7 +34,7 @@
                 {% csrf_token %}
                 <div class="activity-return">
                     <button class="btn btn-primary">Repeat Activity</button>
-                    <a href="{% url 'dashboard' %}" class="btn btn-default">Return to Activity List</a>
+                    <a href="{{ cancel_url }}" class="btn btn-default">Return to Activity List</a>
                 </div>
             </form>
         </div>

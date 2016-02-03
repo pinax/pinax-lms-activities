@@ -31,6 +31,9 @@ class ActivityMixin(object):
     def create_activity_state(self):
         self.activity_state = ActivityState.objects.create(user=self.request.user, activity_slug=self.activity_slug)
 
+    def get_cancel_url(self):
+        return reverse("dashboard")
+
     def get_completed_url(self):
         return reverse("dashboard")
 
@@ -42,7 +45,8 @@ class ActivityMixin(object):
             self.activity_state.latest if self.activity_state else None,
             self.activity_state,
             activity_url=self.get_activity_url(),
-            completed_url=self.get_completed_url()
+            completed_url=self.get_completed_url(),
+            cancel_url=self.get_cancel_url()
         )
 
     def dispatch(self, request, *args, **kwargs):

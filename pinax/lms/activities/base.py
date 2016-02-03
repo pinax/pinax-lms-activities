@@ -14,11 +14,12 @@ class ActivityType(object):
     description = None
     template_name = None
 
-    def __init__(self, session_state, activity_state, activity_url, completed_url):
+    def __init__(self, session_state, activity_state, activity_url, completed_url, cancel_url):
         self.activity_state = activity_state
         self.session_state = session_state
         self.activity_url = activity_url
         self.completed_url = completed_url
+        self.cancel_url = cancel_url
         self.setup()
 
     def setup(self):
@@ -28,7 +29,8 @@ class ActivityType(object):
         kwargs.update({
             "title": self.title,
             "description": self.description,
-            "help_text": getattr(self, "help_text", None)
+            "help_text": getattr(self, "help_text", None),
+            "cancel_url": self.cancel_url
         })
         return kwargs
 
