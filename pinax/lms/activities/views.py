@@ -63,7 +63,7 @@ class ActivityView(LoginRequiredMixin, ActivityMixin, View):
     def get(self, request, *args, **kwargs):
         activity = self.get_activity()
         if self.activity_state is None:  # Must mean you are just starting out
-            return render(request, "activities/start_activity.html", {"activity": activity})
+            return render(request, "pinax/lms/activities/start_activity.html", {"activity": activity})
         activity_play_signal.send(sender=ActivityView, slug=self.activity_slug, activity_session_state=self.activity_state.latest, request=self.request)
         return activity.handle_get_request(self.request)
 

@@ -38,7 +38,7 @@ class ActivityType(object):
 
 class Survey(ActivityType):
 
-    template_name = "activities/survey.html"
+    template_name = "pinax/lms/activities/survey.html"
 
     def handle_get_request(self, request):
         form = SurveyForm(questions=self.questions)
@@ -62,7 +62,7 @@ class Survey(ActivityType):
 class MultiPageSurvey(Survey):
 
     pages = []
-    template_name = "activities/survey.html"
+    template_name = "pinax/lms/activities/survey.html"
 
     def setup(self):
         data = self.session_state.data
@@ -195,13 +195,13 @@ class Quiz(ActivityType):
 
 class TwoChoiceQuiz(Quiz):
 
-    template_name = "activities/two_choice_quiz.html"
+    template_name = "pinax/lms/activities/two_choice_quiz.html"
     valid_answer = ["left", "right"]
 
 
 class LikertQuiz(Quiz):
 
-    template_name = "activities/likert_quiz.html"
+    template_name = "pinax/lms/activities/likert_quiz.html"
     valid_answer = ["1", "2", "3", "4", "5"]
 
     @property
@@ -294,27 +294,27 @@ class QuizWithAnswers(Quiz):
 
 class TwoChoiceWithAnswersQuiz(QuizWithAnswers):
 
-    template_name = "activities/two_choice_with_answers_quiz.html"
-    completed_template_name = "activities/two_choice_with_answers_quiz_completed.html"
-    question_template = "activities/_question.html"
-    answer_template = "activities/_answer.html"
+    template_name = "pinax/lms/activities/two_choice_with_answers_quiz.html"
+    completed_template_name = "pinax/lms/activities/two_choice_with_answers_quiz_completed.html"
+    question_template = "pinax/lms/activities/_question.html"
+    answer_template = "pinax/lms/activities/_answer.html"
     valid_answer = ["left", "right"]
 
 
 class TwoChoiceLikertWithAnswersQuiz(QuizWithAnswers):
 
-    template_name = "activities/two_choice_likert_with_answers_quiz.html"
-    completed_template_name = "activities/two_choice_with_answers_quiz_completed.html"
-    question_template = "activities/_question.html"
+    template_name = "pinax/lms/activities/two_choice_likert_with_answers_quiz.html"
+    completed_template_name = "pinax/lms/activities/two_choice_with_answers_quiz_completed.html"
+    question_template = "pinax/lms/activities/_question.html"
     valid_answer = ["L2", "L1", "0", "R1", "R2"]
 
 
 class ShortAnswerQuiz(Quiz):
 
-    template_name = "activities/short_answer_quiz.html"
-    completed_template_name = "activities/short_answer_quiz_completed.html"
-    question_template = "activities/_question.html"
-    answer_template = "activities/_question.html"
+    template_name = "pinax/lms/activities/short_answer_quiz.html"
+    completed_template_name = "pinax/lms/activities/short_answer_quiz_completed.html"
+    question_template = "pinax/lms/activities/_question.html"
+    answer_template = "pinax/lms/activities/_question.html"
 
     def previous_question_answer(self, data):
         previous_question = None
@@ -386,10 +386,10 @@ class ShortAnswerQuiz(Quiz):
 
 class MultipleShortAnswerQuiz(Quiz):
 
-    template_name = "activities/multiple_short_answer_quiz.html"
-    completed_template_name = "activities/multiple_short_answer_quiz_completed.html"
-    question_template = "activities/_question.html"
-    answer_template = "activities/_question.html"
+    template_name = "pinax/lms/activities/multiple_short_answer_quiz.html"
+    completed_template_name = "pinax/lms/activities/multiple_short_answer_quiz_completed.html"
+    question_template = "pinax/lms/activities/_question.html"
+    answer_template = "pinax/lms/activities/_question.html"
 
     def get_context_data(self, **kwargs):
         context = super(MultipleShortAnswerQuiz, self).get_context_data(**kwargs)
