@@ -1,0 +1,18 @@
+{% extends "site_base.html" %}
+
+{% block head_title %}{{ activity.title }}{% endblock %}
+
+{% block body_class %}activity{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <header>
+                <h1>{{ activity.title }}</h1>
+                <div class="description">{{ activity.description }}</div>
+            </header>
+
+            You need to POST to start.
+        </div>
+    </div>
+{% endblock %}

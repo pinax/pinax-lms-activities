@@ -39,7 +39,7 @@ class ActivityMixin(object):
 
     def get_activity(self):
         return self.activity_class(
-            self.activity_state.latest,
+            self.activity_state.latest if self.activity_state else None,
             self.activity_state,
             activity_url=self.get_activity_url(),
             completed_url=self.get_completed_url()
@@ -61,18 +61,20 @@ class ActivityMixin(object):
 class ActivityView(LoginRequiredMixin, ActivityMixin, View):
 
     def get(self, request, *args, **kwargs):
-        if self.activity_state is None:  # Must mean you are just starting out
-            return render("start_activity.html")
         activity = self.get_activity()
+        if self.activity_state is None:  # Must mean you are just starting out
+            return render(request, "activities/start_activity.html", {"activity": activity})
         activity_play_signal.send(sender=ActivityView, slug=self.activity_slug, activity_session_state=self.activity_state.latest, request=self.request)
         return activity.handle_get_request(self.request)
 
     def post(self, request, *args, **kwargs):
-        if self.activity_state is None:  # @@@ does this depend on if we are starting, resuming or have already finished?
-            self.create_activity_state()
-        if self.activity_state.completed_count == 0:
+        if request.POST.get("start"):  # be explicit about starts so we are not guessing if you are starting a new or a subsequent time
+            if self.activity_state is None:
+                self.create_activity_state()
             activity_start_signal.send(sender=ActivityView, slug=self.activity_slug, activity_state=self.activity_state, request=self.request)
             return redirect(self.get_activity_url())
+        if self.activity_state.completed_count > 0 and not self.activity_class.repeatable:
+            return redirect(self.get_completed_url())  # Error
         activity = self.get_activity()
         return activity.handle_post_request(self.request)
 
