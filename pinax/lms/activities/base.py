@@ -19,10 +19,13 @@ class Activity(object):
     def setup(self):
         pass
 
+    def start(self, request, **kwargs):
+        return redirect("activity_play", slug=kwargs["slug"])
+
 
 class Survey(Activity):
 
-    def handle_request(self, request):
+    def play(self, request):
 
         if request.method == "POST":
             form = SurveyForm(request.POST, questions=self.questions)
@@ -49,7 +52,7 @@ class Survey(Activity):
 
 class MultiPageSurvey(Survey):
 
-    def handle_request(self, request):
+    def play(self, request):
 
         data = self.occurrence_state.data
 
@@ -117,7 +120,7 @@ class Quiz(Activity):
             data = None
         return data
 
-    def handle_request(self, request):
+    def play(self, request):
 
         data = self.get_data()
         if data is None:
@@ -192,7 +195,7 @@ class QuizWithAnswers(Quiz):
                 previous_answer = "you didn't know"
         return previous_question, previous_answer
 
-    def handle_request(self, request):
+    def play(self, request):
         data = self.get_data()
         if data is None:
             messages.info(request, "{} activity already completed.".format(self.title))
@@ -296,7 +299,7 @@ class ShortAnswerQuiz(Quiz):
             previous_answer = data["answer_%d" % (data["question_number"] - 1)]
         return previous_question, previous_answer
 
-    def handle_request(self, request):
+    def play(self, request):
         data = self.get_data()
         if data is None:
             messages.info(request, "{} activity already completed.".format(self.title))
@@ -368,7 +371,7 @@ class MultipleShortAnswerQuiz(Quiz):
     question_template = "activities/_question.html"
     answer_template = "activities/_question.html"
 
-    def handle_request(self, request):
+    def play(self, request):
         data = self.get_data()
         if data is None:
             messages.info(request, "{} activity already completed.".format(self.title))
