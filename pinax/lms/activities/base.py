@@ -2,9 +2,8 @@
 
 from django.shortcuts import redirect, render
 
-from django.contrib import messages
-
 from .forms import SurveyForm
+from .hooks import hookset
 from .signals import activity_completed
 
 
@@ -35,6 +34,12 @@ class ActivityType(object):
         })
         return kwargs
 
+    def success_message(self, request):
+        hookset.success_message(request, self)
+
+    def already_completed_message(self, request):
+        hookset.already_completed_message(request, self)
+
     def render(self, request, **kwargs):
         return render(request, self.template_name, self.get_context_data(**kwargs))
 
@@ -53,10 +58,7 @@ class Survey(ActivityType):
         if form.is_valid():
             self.session_state.data.update({"answers": form.cleaned_data})
             self.session_state.mark_completed()
-            if self.repeatable:
-                messages.success(request, "{} activity completed. You may repeat it again at any time.".format(self.title))
-            else:
-                messages.success(request, "{} activity completed.".format(self.title))
+            self.success_message(request)
             return redirect(self.completed_url)
 
         return self.render(request, form=form)
@@ -88,7 +90,7 @@ class MultiPageSurvey(Survey):
 
     def handle_get_request(self, request):
         if self.data["page"] == len(self.pages):
-            messages.info(request, "{} activity already completed.".format(self.title))
+            self.already_completed_message(request)
             return redirect(self.completed_url)
 
         questions = self.get_questions()
@@ -97,7 +99,7 @@ class MultiPageSurvey(Survey):
 
     def handle_post_request(self, request):
         if self.data["page"] == len(self.pages):
-            messages.info(request, "{} activity already completed.".format(self.title))
+            self.already_completed_message(request)
             return redirect(self.completed_url)
 
         questions = self.get_questions()
@@ -109,11 +111,7 @@ class MultiPageSurvey(Survey):
 
             if self.data["page"] == len(self.pages):
                 self.session_state.mark_completed()
-                if self.repeatable:
-                    messages.success(request, "{} activity completed. You may repeat it again at any time.".format(self.title))
-                else:
-                    messages.success(request, "{} activity completed.".format(self.title))
-
+                self.success_message(request)
                 return redirect(self.completed_url)
             else:
                 self.session_state.save()
@@ -159,13 +157,13 @@ class Quiz(ActivityType):
     def handle_get_request(self, request):
         data = self.get_data()
         if data is None:
-            messages.info(request, "{} activity already completed.".format(self.title))
+            self.already_completed_message(request)
             return redirect(self.completed_url)
 
     def handle_post_request(self, request):
         data = self.get_data()
         if data is None:
-            messages.info(request, "{} activity already completed.".format(self.title))
+            self.already_completed_message(request)
             return redirect(self.completed_url)
 
         if request.POST.get("question_number") == str(data["question_number"] + 1):
@@ -188,10 +186,7 @@ class Quiz(ActivityType):
 
     def completed(self, request):
         self.session_state.mark_completed()
-        if self.repeatable:
-            messages.success(request, "{} activity completed. You may repeat it again at any time.".format(self.title))
-        else:
-            messages.success(request, "{} activity completed.".format(self.title))
+        self.success_message(request)
         activity_completed.send(sender=self, slug=self.activity_slug, activity_session_state=self.session_state, request=request)
         return redirect(self.completed_url)
 
@@ -247,14 +242,14 @@ class QuizWithAnswers(Quiz):
     def handle_get_request(self, request):
         data = self.get_data()
         if data is None:
-            messages.info(request, "{} activity already completed.".format(self.title))
+            self.already_completed_message(request)
             return redirect(self.completed_url)
         return self.render(request)
 
     def handle_post_request(self, request):
         data = self.get_data()
         if data is None:
-            messages.info(request, "{} activity already completed.".format(self.title))
+            self.already_completed_message(request)
             return redirect(self.completed_url)
 
         if request.POST.get("question_number") == str(data["question_number"] + 1):
@@ -346,14 +341,14 @@ class ShortAnswerQuiz(Quiz):
     def handle_get_request(self, request):
         data = self.get_data()
         if data is None:
-            messages.info(request, "{} activity already completed.".format(self.title))
+            self.already_completed_message(request)
             return redirect(self.completed_url)
         return self.render(request)
 
     def handle_post_request(self, request):
         data = self.get_data()
         if data is None:
-            messages.info(request, "{} activity already completed.".format(self.title))
+            self.already_completed_message(request)
             return redirect(self.completed_url)
 
         if request.POST.get("question_number") == str(data["question_number"] + 1):
@@ -410,14 +405,14 @@ class MultipleShortAnswerQuiz(Quiz):
     def handle_get_request(self, request):
         data = self.get_data()
         if data is None:
-            messages.info(request, "{} activity already completed.".format(self.title))
+            self.already_completed_message(request)
             return redirect(self.completed_url)
         return self.render(request)
 
     def handle_post_request(self, request):
         data = self.get_data()
         if data is None:
-            messages.info(request, "{} activity already completed.".format(self.title))
+            self.already_completed_message(request)
             return redirect(self.completed_url)
 
         question = data["questions"][data["question_number"]]
