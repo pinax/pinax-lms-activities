@@ -1,14 +1,14 @@
-from django.conf import settings
-
 from django.contrib import messages
 
 
 class ActivitiesDefaultHookSet(object):
 
     def activity_class_path(self, slug):
+        from .conf import settings
         return settings.PINAX_LMS_ACTIVITIES_ACTIVITIES.get(slug)
 
     def all_activities(self):
+        from .conf import settings
         return settings.PINAX_LMS_ACTIVITIES_ACTIVITIES.items()
 
     def success_message(self, request, activity):
@@ -24,6 +24,7 @@ class ActivitiesDefaultHookSet(object):
 class HookProxy(object):
 
     def __getattr__(self, attr):
+        from .conf import settings
         return getattr(settings.PINAX_LMS_ACTIVITIES_HOOKSET, attr)
 
 
