@@ -13,6 +13,7 @@ class ActivityType(object):
     title = None
     description = None
     template_name = None
+    repeatable = True
 
     def __init__(self, session_state, activity_state, activity_url, completed_url, cancel_url):
         self.activity_state = activity_state
