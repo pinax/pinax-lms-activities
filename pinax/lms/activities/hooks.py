@@ -1,4 +1,4 @@
-from .conf import settings
+from django.conf import settings
 
 
 class ActivitiesDefaultHookSet(object):
