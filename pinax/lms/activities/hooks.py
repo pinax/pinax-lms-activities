@@ -1,5 +1,7 @@
 from django.conf import settings
 
+from django.contrib import messages
+
 
 class ActivitiesDefaultHookSet(object):
 
@@ -8,6 +10,15 @@ class ActivitiesDefaultHookSet(object):
 
     def all_activities(self):
         return settings.PINAX_LMS_ACTIVITIES_ACTIVITIES.items()
+
+    def success_message(self, request, activity):
+        if activity.repeatable:
+            messages.success(request, "{} activity completed. You may repeat it again at any time.".format(activity.title))
+        else:
+            messages.success(request, "{} activity completed.".format(activity.title))
+
+    def already_completed_message(self, request, activity):
+        messages.info(request, "{} activity already completed.".format(activity.title))
 
 
 class HookProxy(object):

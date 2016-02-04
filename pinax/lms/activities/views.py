@@ -1,12 +1,12 @@
+from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.shortcuts import redirect, render
-from django.views.decorators.http import require_POST
+from django.views.generic import View
 
 from django.contrib.auth.models import User
 
 from account.decorators import login_required
-
-from pinax.eventlog.models import log
+from account.mixins import LoginRequiredMixin
 
 from .hooks import hookset
 from .models import (
@@ -16,113 +16,71 @@ from .models import (
 )
 from .signals import (
     activity_start as activity_start_signal,
-    activity_play as activity_play_signal,
-    activity_completed as activity_completed_signal
+    activity_play as activity_play_signal
 )
 
 
-@require_POST
-@login_required
-def activity_start(request, slug):
+class ActivityMixin(object):
 
-    activity_class_path = hookset.activity_class_path(slug)
+    def get_activity_class(self):
+        return load_path_attr(self.activity_class_path)
 
-    if activity_class_path is None:
-        raise Http404
+    def get_activity_state(self):
+        return ActivityState.state_for_user(self.request.user, self.activity_slug)
 
-    Activity = load_path_attr(activity_class_path)
+    def create_activity_state(self):
+        self.activity_state = ActivityState.objects.create(user=self.request.user, activity_slug=self.activity_slug)
 
-    activity_state, _ = ActivityState.objects.get_or_create(user=request.user, activity_slug=slug)
+    def get_cancel_url(self):
+        return reverse("dashboard")
 
-    if activity_state.completed_count > 0 and not Activity.repeatable:
-        log(
-            user=request.user,
-            action="ACTIVITY_ERROR",
-            extra={
-                "error": "not repeatable",
-                "slug": slug,
-            }
+    def get_completed_url(self):
+        return reverse("dashboard")
+
+    def get_activity_url(self):
+        return reverse("activity", kwargs=dict(slug=self.activity_slug))
+
+    def get_activity(self):
+        return self.activity_class(
+            self.activity_state.latest if self.activity_state else None,
+            self.activity_state,
+            activity_url=self.get_activity_url(),
+            completed_url=self.get_completed_url(),
+            cancel_url=self.get_cancel_url()
         )
-        # @@@ user message
-        return redirect("dashboard")
 
-    activity_start_signal.send(sender=request.user, slug=slug, activity_state=activity_state, request=request)
-    return redirect("activity_play", slug)
-
-
-@login_required
-def activity_play(request, slug):
-
-    activity_class_path = hookset.activity_class_path(slug)
-
-    if activity_class_path is None:
-        raise Http404
-
-    Activity = load_path_attr(activity_class_path)
-
-    activity_state = ActivityState.state_for_user(request.user, slug)
-
-    if activity_state is None:
-        log(
-            user=request.user,
-            action="ACTIVITY_ERROR",
-            extra={
-                "error": "not started",
-                "slug": slug,
-            }
-        )
-        # @@@ user message
-        return redirect("dashboard")
-
-    activity = Activity(activity_state.latest, activity_state)
-
-    activity_play_signal.send(sender=request.user, slug=slug, activity_occurrence_state=activity_state.latest, request=request)
-    return activity.handle_request(request)
+    def dispatch(self, request, *args, **kwargs):
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
+        self.activity_slug = kwargs.get("slug")
+        self.activity_class_path = hookset.activity_class_path(kwargs.get("slug"))
+        if self.activity_class_path is None:
+            raise Http404
+        self.activity_class = self.get_activity_class()
+        self.activity_state = self.get_activity_state()
+        return super(ActivityMixin, self).dispatch(request, *args, **kwargs)
 
 
-@login_required
-def activity_completed(request, slug):
+class ActivityView(LoginRequiredMixin, ActivityMixin, View):
 
-    activity_class_path = hookset.activity_class_path(slug)
+    def get(self, request, *args, **kwargs):
+        activity = self.get_activity()
+        if self.activity_state is None:  # Must mean you are just starting out
+            return render(request, "pinax/lms/activities/start_activity.html", {"activity": activity})
+        activity_play_signal.send(sender=ActivityView, slug=self.activity_slug, activity_session_state=self.activity_state.latest, request=self.request)
+        return activity.handle_get_request(self.request)
 
-    if activity_class_path is None:
-        raise Http404
-
-    Activity = load_path_attr(activity_class_path)
-
-    activity_state = ActivityState.state_for_user(request.user, slug)
-
-    if activity_state is None:
-        log(
-            user=request.user,
-            action="ACTIVITY_ERROR",
-            extra={
-                "error": "not started",
-                "slug": slug,
-            }
-        )
-        # @@@ user message
-        return redirect("dashboard")
-
-    last_completed = activity_state.last_completed
-
-    if last_completed is None:
-        log(
-            user=request.user,
-            action="ACTIVITY_ERROR",
-            extra={
-                "error": "not completed",
-                "slug": slug,
-            }
-        )
-        # @@@ user message
-        return redirect("dashboard")
-
-    activity = Activity(last_completed, activity_state)
-
-    activity_completed_signal.send(sender=request.user, slug=slug, activity_occurrence_state=last_completed, request=request)
-
-    return activity.completed(request)
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("start"):  # be explicit about starts so we are not guessing if you are starting a new or a subsequent time
+            if self.activity_state is None:
+                self.create_activity_state()
+            activity_start_signal.send(sender=ActivityView, slug=self.activity_slug, activity_state=self.activity_state, request=self.request)
+            return redirect(self.get_activity_url())
+        if self.activity_state.completed_count > 0 and not self.activity_class.repeatable:
+            return redirect(self.get_completed_url())  # Error
+        activity = self.get_activity()
+        return activity.handle_post_request(self.request)
 
 
 @login_required
@@ -137,21 +95,21 @@ def staff_dashboard(request):
         activity = load_path_attr(activity_class_path)
         activity_states = ActivityState.objects.filter(activity_slug=slug)
         completed_activity_states = activity_states.exclude(completed_count=0)
-        activity_occurrence_states = ActivitySessionState.objects.filter(activity_slug=slug)
-        completed_activity_occurrence_states = activity_occurrence_states.filter(completed__isnull=False)
+        activity_session_states = ActivitySessionState.objects.filter(activity_slug=slug)
+        completed_activity_session_states = activity_session_states.filter(completed__isnull=False)
 
         activities.append({
             "slug": slug,
             "title": activity.title,
             "activity_states": activity_states,
             "completed_activity_states": completed_activity_states,
-            "activity_occurrence_states": activity_occurrence_states,
-            "completed_activity_occurrence_states": completed_activity_occurrence_states,
+            "activity_session_states": activity_session_states,
+            "completed_activity_session_states": completed_activity_session_states,
         })
     return render(request, "staff_dashboard.html", {
         "users": User.objects.all(),
         "activity_states": ActivityState.objects.all(),
-        "activity_occurrence_states": ActivitySessionState.objects.all(),
+        "activity_session_states": ActivitySessionState.objects.all(),
         "activities": activities,
     })
 
@@ -163,9 +121,9 @@ def staff_activity_detail(request, slug):
         raise Http404
 
     activity_states = ActivityState.objects.filter(activity_slug=slug)
-    activity_occurrence_states = ActivitySessionState.objects.filter(activity_slug=slug)
+    activity_session_states = ActivitySessionState.objects.filter(activity_slug=slug)
 
     return render(request, "staff_activity_detail.html", {
         "activity_states": activity_states,
-        "activity_occurrence_states": activity_occurrence_states,
+        "activity_session_states": activity_session_states,
     })

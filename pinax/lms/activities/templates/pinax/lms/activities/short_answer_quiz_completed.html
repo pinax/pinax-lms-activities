@@ -9,7 +9,7 @@
         <div class="col-md-8 col-md-offset-2">
             <header>
                 <h1>{{ title }} <span class="question-number">COMPLETED</span></h1>
-                <div class="description">{{ description }}</div>
+                {% if description %}<div class="description">{{ description }}</div>{% endif %}
             </header>
 
             <table class="results-table">
@@ -34,7 +34,7 @@
                 {% csrf_token %}
                 <div class="activity-return">
                     <button class="btn btn-primary">Repeat Activity</button>
-                    <a href="{% url 'dashboard' %}" class="btn btn-default">Return to Activity List</a>
+                    <a href="{{ cancel_url }}" class="btn btn-default">Return to Activity List</a>
                 </div>
             </form>
         </div>
