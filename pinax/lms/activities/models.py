@@ -69,15 +69,11 @@ class ActivityState(models.Model):
 
     @property
     def last_completed(self):
-        completed = ActivitySessionState.objects.filter(
+        return next(iter(ActivitySessionState.objects.filter(
             user=self.user,
             activity_key=self.activity_key,
             completed__isnull=False
-        ).order_by("-started")
-        if completed:
-            return completed[0]
-        else:
-            return None
+        ).order_by("-started")), None)
 
     @property
     def all_sessions(self):
