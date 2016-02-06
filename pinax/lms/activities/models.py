@@ -86,6 +86,15 @@ class ActivityState(models.Model):
     def state_for_user(cls, user, activity_key):
         return cls.objects.filter(user=user, activity_key=activity_key).first()
 
+    @property
+    def progression(self):
+        if self.in_progress:
+            return "continue"
+        elif self.repeatable:
+            return "repeat"
+        else:
+            return "completed"
+
 
 class ActivitySessionState(models.Model):
     """
