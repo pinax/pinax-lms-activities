@@ -72,15 +72,24 @@ class ActivityView(LoginRequiredMixin, ActivityMixin, View):
         return activity.handle_get_request(self.request)
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get("start"):  # be explicit about starts so we are not guessing if you are starting a new or a subsequent time
-            if self.activity_state is None:
-                self.create_activity_state()
-            activity_start_signal.send(sender=ActivityView, activity_key=self.activity_key, activity_state=self.activity_state, request=self.request)
-            return redirect(self.get_activity_url())
-        if self.activity_state.completed_count > 0 and not self.activity_class.repeatable:
-            return redirect(self.get_completed_url())  # Error
+        progression = self.activity_state.progression if self.activity_state is not None else "start"
+        return getattr(self, "_{}".format(progression))()
+
+    def _continue(self):
         activity = self.get_activity()
         return activity.handle_post_request(self.request)
+
+    def _start(self):
+        self.create_activity_state()
+        activity_start_signal.send(sender=ActivityView, activity_key=self.activity_key, activity_state=self.activity_state, request=self.request)
+        return redirect(self.get_activity_url())
+
+    def _repeat(self):
+        activity_start_signal.send(sender=ActivityView, activity_key=self.activity_key, activity_state=self.activity_state, request=self.request)
+        return redirect(self.get_activity_url())
+
+    def _completed(self):
+        return redirect(self.get_completed_url())
 
 
 @login_required
