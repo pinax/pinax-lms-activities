@@ -16,7 +16,7 @@ setup(
     description="framework and base learning activities for Pinax LMS",
     name="pinax-lms-activities",
     long_description=read("README.rst"),
-    version="0.7.1",
+    version="0.8.0",
     url="http://pinax-lms-activities.rtfd.org/",
     license="MIT",
     packages=find_packages(),
