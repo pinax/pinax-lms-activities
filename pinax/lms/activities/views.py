@@ -53,8 +53,8 @@ class ActivityMixin(object):
         self.request = request
         self.args = args
         self.kwargs = kwargs
-        self.activity_key = kwargs.get("slug")
-        self.activity_class_path = hookset.activity_class_path(kwargs.get("slug"))
+        self.activity_key = kwargs.get("key")
+        self.activity_class_path = hookset.activity_class_path(kwargs.get("key"))
         if self.activity_class_path is None:
             raise Http404
         self.activity_class = self.get_activity_class()
@@ -99,7 +99,7 @@ def staff_dashboard(request):
         completed_activity_session_states = activity_session_states.filter(completed__isnull=False)
 
         activities.append({
-            "slug": slug,
+            "activity_key": key,
             "title": activity.title,
             "activity_states": activity_states,
             "completed_activity_states": completed_activity_states,
