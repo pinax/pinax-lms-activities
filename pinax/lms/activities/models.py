@@ -33,13 +33,13 @@ class UserState(models.Model):
 class ActivityState(models.Model):
     """
     this stores the overall state of a particular user doing a particular
-    activity across all occurences of that activity.
+    activity across all sessions of that activity.
     """
 
     user = models.ForeignKey(User)
     activity_slug = models.CharField(max_length=50)
 
-    # how many occurences have been completed by this user
+    # how many sessions have been completed by this user
     completed_count = models.IntegerField(default=0)
 
     data = jsonfield.JSONField(default=dict)
@@ -60,12 +60,12 @@ class ActivityState(models.Model):
 
     @property
     def latest(self):
-        occurrence, _ = ActivitySessionState.objects.get_or_create(
+        session, _ = ActivitySessionState.objects.get_or_create(
             user=self.user,
             activity_slug=self.activity_slug,
             completed=None
         )
-        return occurrence
+        return session
 
     @property
     def last_completed(self):
@@ -80,7 +80,7 @@ class ActivityState(models.Model):
             return None
 
     @property
-    def all_occurrences(self):
+    def all_sessions(self):
         return ActivitySessionState.objects.filter(
             user=self.user,
             activity_slug=self.activity_slug,
@@ -93,7 +93,7 @@ class ActivityState(models.Model):
 
 class ActivitySessionState(models.Model):
     """
-    this stores the state of a particular occurence of a particular user
+    this stores the state of a particular session of a particular user
     doing a particular activity.
     """
 
