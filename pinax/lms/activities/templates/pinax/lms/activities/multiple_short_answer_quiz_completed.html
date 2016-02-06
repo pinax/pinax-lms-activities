@@ -37,7 +37,7 @@
 
             {% endfor %}
 
-            <form action="{% url 'activity_start' slug %}" method="post">
+            <form action="{% url 'activity_start' activity_key %}" method="post">
                 {% csrf_token %}
                 <div class="activity-return">
                     <button class="btn btn-primary">Repeat Activity</button>

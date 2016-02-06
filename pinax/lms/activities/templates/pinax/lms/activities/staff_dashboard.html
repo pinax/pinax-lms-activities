@@ -18,14 +18,14 @@
 
     <table class="table table-striped table-condensed">
         <tr>
-            <th>slug</th>
+            <th>activity key</th>
             <th>title</th>
             <th>users</th>
             <th>occurrences</th>
         </tr>
         {% for activity in activities %}
             <tr>
-                <td><a href="{% url 'staff_activity_detail' activity.slug %}">{{ activity.slug }}</a></td>
+                <td><a href="{% url 'staff_activity_detail' activity.activity_key %}">{{ activity.activity_key }}</a></td>
                 <td>{{ activity.title }}</td>
                 <td>
                     {{ activity.completed_activity_states.count }} /

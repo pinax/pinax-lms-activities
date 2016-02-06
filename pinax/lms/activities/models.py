@@ -37,7 +37,7 @@ class ActivityState(models.Model):
     """
 
     user = models.ForeignKey(User)
-    activity_slug = models.CharField(max_length=50)
+    activity_key = models.CharField(max_length=50)
 
     # how many sessions have been completed by this user
     completed_count = models.IntegerField(default=0)
@@ -45,14 +45,14 @@ class ActivityState(models.Model):
     data = jsonfield.JSONField(default=dict)
 
     class Meta:
-        unique_together = [("user", "activity_slug")]
+        unique_together = [("user", "activity_key")]
 
     @property
     def in_progress(self):
         try:
             return ActivitySessionState.objects.get(
                 user=self.user,
-                activity_slug=self.activity_slug,
+                activity_key=self.activity_key,
                 completed=None
             )
         except ActivitySessionState.DoesNotExist:
@@ -62,7 +62,7 @@ class ActivityState(models.Model):
     def latest(self):
         session, _ = ActivitySessionState.objects.get_or_create(
             user=self.user,
-            activity_slug=self.activity_slug,
+            activity_key=self.activity_key,
             completed=None
         )
         return session
@@ -71,7 +71,7 @@ class ActivityState(models.Model):
     def last_completed(self):
         completed = ActivitySessionState.objects.filter(
             user=self.user,
-            activity_slug=self.activity_slug,
+            activity_key=self.activity_key,
             completed__isnull=False
         ).order_by("-started")
         if completed:
@@ -83,12 +83,12 @@ class ActivityState(models.Model):
     def all_sessions(self):
         return ActivitySessionState.objects.filter(
             user=self.user,
-            activity_slug=self.activity_slug,
+            activity_key=self.activity_key,
         ).order_by("started")
 
     @classmethod
-    def state_for_user(cls, user, slug):
-        return next(iter(cls.objects.filter(user=user, activity_slug=slug)), None)
+    def state_for_user(cls, user, activity_key):
+        return next(iter(cls.objects.filter(user=user, activity_key=activity_key)), None)
 
 
 class ActivitySessionState(models.Model):
@@ -98,7 +98,7 @@ class ActivitySessionState(models.Model):
     """
 
     user = models.ForeignKey(User)
-    activity_slug = models.CharField(max_length=50)
+    activity_key = models.CharField(max_length=50)
 
     started = models.DateTimeField(default=timezone.now)
     completed = models.DateTimeField(null=True)  # NULL means in progress
@@ -106,14 +106,14 @@ class ActivitySessionState(models.Model):
     data = jsonfield.JSONField(default=dict)
 
     class Meta:
-        unique_together = [("user", "activity_slug", "started")]
+        unique_together = [("user", "activity_key", "started")]
 
     def mark_completed(self):
         self.completed = timezone.now()
         self.save()
         activity_state = ActivityState.objects.get(
             user=self.user,
-            activity_slug=self.activity_slug
+            activity_key=self.activity_key
         )
         activity_state.completed_count = models.F("completed_count") + 1
         activity_state.save()
@@ -128,16 +128,16 @@ def activities_for_user(user):
         "repeatable": []
     }
 
-    for slug, activity_class_path in hookset.all_activities():
+    for key, activity_class_path in hookset.all_activities():
         activity = load_path_attr(activity_class_path)
-        state = ActivityState.state_for_user(user, slug)
+        state = ActivityState.state_for_user(user, key)
         user_num_completions = ActivitySessionState.objects.filter(
             user=user,
-            activity_slug=slug,
+            activity_key=key,
             completed__isnull=False
         ).count()
         activity_entry = {
-            "slug": slug,
+            "activity_key": key,
             "title": activity.title,
             "description": activity.description,
             "state": state,

@@ -26,10 +26,10 @@ class ActivityMixin(object):
         return load_path_attr(self.activity_class_path)
 
     def get_activity_state(self):
-        return ActivityState.state_for_user(self.request.user, self.activity_slug)
+        return ActivityState.state_for_user(self.request.user, self.activity_key)
 
     def create_activity_state(self):
-        self.activity_state = ActivityState.objects.create(user=self.request.user, activity_slug=self.activity_slug)
+        self.activity_state = ActivityState.objects.create(user=self.request.user, activity_key=self.activity_key)
 
     def get_cancel_url(self):
         return reverse("dashboard")
@@ -38,7 +38,7 @@ class ActivityMixin(object):
         return reverse("dashboard")
 
     def get_activity_url(self):
-        return reverse("activity", kwargs=dict(slug=self.activity_slug))
+        return reverse("activity", kwargs=dict(activity_key=self.activity_key))
 
     def get_activity(self):
         return self.activity_class(
@@ -53,7 +53,7 @@ class ActivityMixin(object):
         self.request = request
         self.args = args
         self.kwargs = kwargs
-        self.activity_slug = kwargs.get("slug")
+        self.activity_key = kwargs.get("slug")
         self.activity_class_path = hookset.activity_class_path(kwargs.get("slug"))
         if self.activity_class_path is None:
             raise Http404
@@ -68,14 +68,14 @@ class ActivityView(LoginRequiredMixin, ActivityMixin, View):
         activity = self.get_activity()
         if self.activity_state is None:  # Must mean you are just starting out
             return render(request, "pinax/lms/activities/start_activity.html", {"activity": activity})
-        activity_play_signal.send(sender=ActivityView, slug=self.activity_slug, activity_session_state=self.activity_state.latest, request=self.request)
+        activity_play_signal.send(sender=ActivityView, activity_key=self.activity_key, activity_session_state=self.activity_state.latest, request=self.request)
         return activity.handle_get_request(self.request)
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("start"):  # be explicit about starts so we are not guessing if you are starting a new or a subsequent time
             if self.activity_state is None:
                 self.create_activity_state()
-            activity_start_signal.send(sender=ActivityView, slug=self.activity_slug, activity_state=self.activity_state, request=self.request)
+            activity_start_signal.send(sender=ActivityView, activity_key=self.activity_key, activity_state=self.activity_state, request=self.request)
             return redirect(self.get_activity_url())
         if self.activity_state.completed_count > 0 and not self.activity_class.repeatable:
             return redirect(self.get_completed_url())  # Error
@@ -91,11 +91,11 @@ def staff_dashboard(request):
 
     activities = []
 
-    for slug, activity_class_path in hookset.all_activities():
+    for key, activity_class_path in hookset.all_activities():
         activity = load_path_attr(activity_class_path)
-        activity_states = ActivityState.objects.filter(activity_slug=slug)
+        activity_states = ActivityState.objects.filter(activity_key=key)
         completed_activity_states = activity_states.exclude(completed_count=0)
-        activity_session_states = ActivitySessionState.objects.filter(activity_slug=slug)
+        activity_session_states = ActivitySessionState.objects.filter(activity_key=key)
         completed_activity_session_states = activity_session_states.filter(completed__isnull=False)
 
         activities.append({
@@ -115,13 +115,13 @@ def staff_dashboard(request):
 
 
 @login_required
-def staff_activity_detail(request, slug):
+def staff_activity_detail(request, activity_key):
 
     if not request.user.is_staff:
         raise Http404
 
-    activity_states = ActivityState.objects.filter(activity_slug=slug)
-    activity_session_states = ActivitySessionState.objects.filter(activity_slug=slug)
+    activity_states = ActivityState.objects.filter(activity_key=activity_key)
+    activity_session_states = ActivitySessionState.objects.filter(activity_key=activity_key)
 
     return render(request, "staff_activity_detail.html", {
         "activity_states": activity_states,

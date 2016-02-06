@@ -187,7 +187,7 @@ class Quiz(ActivityType):
     def completed(self, request):
         self.session_state.mark_completed()
         self.success_message(request)
-        activity_completed.send(sender=self, slug=self.activity_slug, activity_session_state=self.session_state, request=request)
+        activity_completed.send(sender=self, activity_key=self.activity_key, activity_session_state=self.session_state, request=request)
         return redirect(self.completed_url)
 
 
@@ -282,11 +282,11 @@ class QuizWithAnswers(Quiz):
             "description": self.description,
             "help_text": getattr(self, "help_text", None),
             "results": results,
-            "slug": self.activity_state.activity_slug,
+            "activity_key": self.activity_state.activity_key,
             "answer_template": self.answer_template,
         }
         ctx.update(self.extra_context)
-        activity_completed.send(sender=self, slug=self.activity_slug, activity_session_state=self.session_state, request=request)
+        activity_completed.send(sender=self, activity_key=self.activity_key, activity_session_state=self.session_state, request=request)
         return render(request, self.completed_template_name, ctx)
 
 
@@ -374,11 +374,11 @@ class ShortAnswerQuiz(Quiz):
             "description": self.description,
             "help_text": getattr(self, "help_text", None),
             "results": results,
-            "slug": self.activity_state.activity_slug,
+            "activity_key": self.activity_state.activity_key,
             "answer_template": self.answer_template,
         }
         ctx.update(self.extra_context)
-        activity_completed.send(sender=self, slug=self.activity_slug, activity_session_state=self.session_state, request=request)
+        activity_completed.send(sender=self, activity_key=self.activity_key, activity_session_state=self.session_state, request=request)
         return render(request, self.completed_template_name, ctx)
 
 
@@ -443,9 +443,9 @@ class MultipleShortAnswerQuiz(Quiz):
             "description": self.description,
             "help_text": getattr(self, "help_text", None),
             "results": results,
-            "slug": self.activity_state.activity_slug,
+            "activity_key": self.activity_state.activity_key,
             "answer_template": self.answer_template,
         }
         ctx.update(self.extra_context)
-        activity_completed.send(sender=self, slug=self.activity_slug, activity_session_state=self.session_state, request=request)
+        activity_completed.send(sender=self, activity_key=self.activity_key, activity_session_state=self.session_state, request=request)
         return render(request, self.completed_template_name, ctx)
