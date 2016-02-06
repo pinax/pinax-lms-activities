@@ -49,6 +49,10 @@ class ActivityState(models.Model):
         unique_together = [("user", "activity_key")]
 
     @property
+    def activity_class(self):
+        return load_path_attr(self.activity_class_path)
+
+    @property
     def in_progress(self):
         try:
             return ActivitySessionState.objects.get(
@@ -91,7 +95,7 @@ class ActivityState(models.Model):
     def progression(self):
         if self.in_progress:
             return "continue"
-        elif self.repeatable:
+        elif self.activity_class.repeatable:
             return "repeat"
         else:
             return "completed"
