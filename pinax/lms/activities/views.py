@@ -9,15 +9,13 @@ from account.decorators import login_required
 from account.mixins import LoginRequiredMixin
 
 from .hooks import hookset
-from .models import (
-    ActivityState,
-    ActivitySessionState,
-    load_path_attr
-)
+from .proxies import ActivityState
+from .models import ActivitySessionState
 from .signals import (
     activity_start as activity_start_signal,
     activity_play as activity_play_signal
 )
+from .utils import load_path_attr
 
 
 class ActivityMixin(object):
@@ -26,13 +24,10 @@ class ActivityMixin(object):
         return load_path_attr(self.activity_class_path)
 
     def get_activity_state(self):
-        return ActivityState.state_for_user(self.request.user, self.activity_key)
-
-    def create_activity_state(self):
-        self.activity_state = ActivityState.objects.create(
-            user=self.request.user,
+        return ActivityState(
+            self.request,
             activity_key=self.activity_key,
-            activity_class_path=self.activity_class_path
+            activity_class_path=self.activity_class_path,
         )
 
     def get_cancel_url(self):
@@ -66,25 +61,23 @@ class ActivityMixin(object):
         return super(ActivityMixin, self).dispatch(request, *args, **kwargs)
 
 
-class ActivityView(LoginRequiredMixin, ActivityMixin, View):
+class ActivityView(ActivityMixin, View):
 
     def get(self, request, *args, **kwargs):
         activity = self.get_activity()
-        if self.activity_state is None:  # Must mean you are just starting out
+        if self.activity_state.progression == "start":  # Must mean you are just starting out
             return render(request, "pinax/lms/activities/start_activity.html", {"activity": activity})
         activity_play_signal.send(sender=ActivityView, activity_key=self.activity_key, activity_session_state=self.activity_state.latest, request=self.request)
         return activity.handle_get_request(self.request)
 
     def post(self, request, *args, **kwargs):
-        progression = self.activity_state.progression if self.activity_state is not None else "start"
-        return getattr(self, "_{}".format(progression))()
+        return getattr(self, "_{}".format(self.activity_state.progression))()
 
     def _continue(self):
         activity = self.get_activity()
         return activity.handle_post_request(self.request)
 
     def _start(self):
-        self.create_activity_state()
         activity_start_signal.send(sender=ActivityView, activity_key=self.activity_key, activity_state=self.activity_state, request=self.request)
         return redirect(self.get_activity_url())
 

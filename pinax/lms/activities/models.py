@@ -13,12 +13,13 @@ class UserState(models.Model):
     """
     this stores the overall state of a particular user.
     """
-    user = models.OneToOneField(User)
+    user = models.OneToOneField(User, null=True)
 
     data = jsonfield.JSONField(default=dict)
 
     @classmethod
     def for_user(cls, user):
+        assert user.is_authenticated(), "user must be authenticated"
         user_state, _ = cls.objects.get_or_create(user=user)
         return user_state
 
@@ -36,7 +37,7 @@ class ActivityState(models.Model):
     activity across all sessions of that activity.
     """
 
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, null=True)
     activity_key = models.CharField(max_length=50)
     activity_class_path = models.CharField(max_length=300)
 
@@ -54,41 +55,24 @@ class ActivityState(models.Model):
 
     @property
     def in_progress(self):
-        try:
-            return ActivitySessionState.objects.get(
-                user=self.user,
-                activity_key=self.activity_key,
-                completed=None
-            )
-        except ActivitySessionState.DoesNotExist:
-            return None
+        return next(iter(self.sessions.filter(completed=None)), None)
 
     @property
     def latest(self):
-        session, _ = ActivitySessionState.objects.get_or_create(
-            user=self.user,
-            activity_key=self.activity_key,
-            completed=None
-        )
+        session, _ = self.sessions.get_or_create(completed=None)
         return session
 
     @property
     def last_completed(self):
-        return ActivitySessionState.objects.filter(
-            user=self.user,
-            activity_key=self.activity_key,
-            completed__isnull=False
-        ).order_by("-started").first()
+        return self.sessions.filter(completed__isnull=False).order_by("-started").first()
 
     @property
     def all_sessions(self):
-        return ActivitySessionState.objects.filter(
-            user=self.user,
-            activity_key=self.activity_key,
-        ).order_by("started")
+        return self.sessions.order_by("started")
 
     @classmethod
     def state_for_user(cls, user, activity_key):
+        assert user.is_authenticated(), "user must be authenticated"
         return cls.objects.filter(user=user, activity_key=activity_key).first()
 
     @property
@@ -107,8 +91,7 @@ class ActivitySessionState(models.Model):
     doing a particular activity.
     """
 
-    user = models.ForeignKey(User)
-    activity_key = models.CharField(max_length=50)
+    activity_state = models.ForeignKey(ActivityState, related_name="sessions")
 
     started = models.DateTimeField(default=timezone.now)
     completed = models.DateTimeField(null=True)  # NULL means in progress
@@ -116,17 +99,13 @@ class ActivitySessionState(models.Model):
     data = jsonfield.JSONField(default=dict)
 
     class Meta:
-        unique_together = [("user", "activity_key", "started")]
+        unique_together = [("activity_state", "started")]
 
     def mark_completed(self):
         self.completed = timezone.now()
         self.save()
-        activity_state = ActivityState.objects.get(
-            user=self.user,
-            activity_key=self.activity_key
-        )
-        activity_state.completed_count = models.F("completed_count") + 1
-        activity_state.save()
+        self.activity_state.completed_count = models.F("completed_count") + 1
+        self.activity_state.save()
 
 
 def activities_for_user(user):
