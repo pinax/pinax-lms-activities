@@ -19,6 +19,8 @@ from .utils import load_path_attr
 
 class ActivityMixin(object):
 
+    activity_key = None
+
     def get_activity_class(self):
         return load_path_attr(self.activity_class_path)
 
@@ -57,8 +59,9 @@ class ActivityMixin(object):
         self.request = request
         self.args = args
         self.kwargs = kwargs
-        self.activity_key = kwargs.get("key")
-        self.activity_class_path = hookset.activity_class_path(kwargs.get("key"))
+        if self.activity_key is None:
+            self.activity_key = kwargs.get("key")
+        self.activity_class_path = hookset.activity_class_path(self.activity_key)
         if self.activity_class_path is None:
             raise Http404
         self.activity_class = self.get_activity_class()
