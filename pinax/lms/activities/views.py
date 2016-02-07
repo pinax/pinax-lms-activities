@@ -48,6 +48,7 @@ class ActivityMixin(object):
         )
 
     def get_activity_kwargs(self, **kwargs):
+        kwargs.setdefault("parameters", {})
         kwargs.update({
             "activity_url": self.get_activity_url(),
             "completed_url": self.get_completed_url(),
