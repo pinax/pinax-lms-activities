@@ -90,8 +90,9 @@ class ActivityState(BaseProxy):
 
     @property
     def latest(self):
-        self.ensure_exists()
-        return self.obj.latest
+        if self.exists:
+            return self.obj.latest
+        return None
 
     @property
     def last_completed(self):

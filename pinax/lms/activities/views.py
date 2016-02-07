@@ -42,7 +42,7 @@ class ActivityMixin(object):
 
     def get_activity(self):
         return self.activity_class(
-            self.activity_state.latest if self.activity_state else None,
+            self.activity_state.latest,
             self.activity_state,
             **self.get_activity_kwargs()
         )
@@ -87,6 +87,7 @@ class ActivityView(ActivityMixin, View):
         return activity.handle_post_request(self.request)
 
     def _start(self):
+        self.activity_state.ensure_exists()
         activity_start_signal.send(sender=ActivityView, activity_key=self.activity_key, activity_state=self.activity_state, request=self.request)
         return redirect(self.get_activity_url())
 
