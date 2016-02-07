@@ -42,10 +42,16 @@ class ActivityMixin(object):
         return self.activity_class(
             self.activity_state.latest if self.activity_state else None,
             self.activity_state,
-            activity_url=self.get_activity_url(),
-            completed_url=self.get_completed_url(),
-            cancel_url=self.get_cancel_url()
+            **self.get_activity_kwargs()
         )
+
+    def get_activity_kwargs(self, **kwargs):
+        kwargs.update({
+            "activity_url": self.get_activity_url(),
+            "completed_url": self.get_completed_url(),
+            "cancel_url": self.get_cancel_url(),
+        })
+        return kwargs
 
     def dispatch(self, request, *args, **kwargs):
         self.request = request

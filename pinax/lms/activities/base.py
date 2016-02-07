@@ -14,9 +14,10 @@ class ActivityType(object):
     template_name = None
     repeatable = True
 
-    def __init__(self, session_state, activity_state, activity_url, completed_url, cancel_url):
+    def __init__(self, session_state, activity_state, parameters, activity_url, completed_url, cancel_url):
         self.activity_state = activity_state
         self.session_state = session_state
+        self.parameters = parameters
         self.activity_url = activity_url
         self.completed_url = completed_url
         self.cancel_url = cancel_url
