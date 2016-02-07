@@ -9,14 +9,14 @@ from .signals import activity_completed
 
 class ActivityType(object):
 
-    title = None
-    description = ""
     template_name = None
     repeatable = True
 
-    def __init__(self, session_state, activity_state, parameters, activity_url, completed_url, cancel_url):
+    def __init__(self, session_state, activity_state, title, description, parameters, activity_url, completed_url, cancel_url):
         self.activity_state = activity_state
         self.session_state = session_state
+        self.title = title
+        self.description = description
         self.parameters = parameters
         self.activity_url = activity_url
         self.completed_url = completed_url
