@@ -70,7 +70,7 @@ class ActivityMixin(object):
         self.kwargs = kwargs
         if self.activity_key is None:
             self.activity_key = kwargs.get("key")
-        self.activity_class_path = hookset.activity_class_path(self.activity_key)
+        self.activity_class_path = hookset.activity_class_path(*args, **kwargs)
         if self.activity_class_path is None:
             raise Http404
         self.activity_class = self.get_activity_class()

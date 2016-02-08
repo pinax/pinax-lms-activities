@@ -3,9 +3,9 @@ from django.contrib import messages
 
 class ActivitiesDefaultHookSet(object):
 
-    def activity_class_path(self, slug):
+    def activity_class_path(self, *args, **kwargs):
         from .conf import settings
-        return settings.PINAX_LMS_ACTIVITIES_ACTIVITIES.get(slug)
+        return settings.PINAX_LMS_ACTIVITIES_ACTIVITIES.get(kwargs.get("slug"))
 
     def all_activities(self):
         from .conf import settings
