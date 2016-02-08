@@ -12,7 +12,7 @@ class ActivityType(object):
     template_name = None
     repeatable = True
 
-    def __init__(self, session_state, activity_state, title, description, parameters, activity_url, completed_url, cancel_url):
+    def __init__(self, session_state, activity_state, title, description, parameters, activity_url, completed_url, cancel_url, extra_context):
         self.activity_state = activity_state
         self.session_state = session_state
         self.title = title
@@ -21,6 +21,7 @@ class ActivityType(object):
         self.activity_url = activity_url
         self.completed_url = completed_url
         self.cancel_url = cancel_url
+        self.extra_context = extra_context
         self.setup()
 
     def setup(self):
@@ -33,6 +34,7 @@ class ActivityType(object):
             "help_text": getattr(self, "help_text", None),
             "cancel_url": self.cancel_url
         })
+        kwargs.update(self.extra_context)
         return kwargs
 
     def success_message(self, request):
