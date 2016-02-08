@@ -20,6 +20,7 @@ from .utils import load_path_attr
 class ActivityMixin(object):
 
     activity_key = None
+    base_template_name = "pinax/lms/activities/base.html"
 
     def get_activity_class(self):
         return load_path_attr(self.activity_class_path)
@@ -47,12 +48,19 @@ class ActivityMixin(object):
             **self.get_activity_kwargs()
         )
 
+    def get_extra_context(self, **kwargs):
+        kwargs.update({
+            "base_template": self.base_template_name
+        })
+        return kwargs
+
     def get_activity_kwargs(self, **kwargs):
         kwargs.setdefault("parameters", {})
         kwargs.update({
             "activity_url": self.get_activity_url(),
             "completed_url": self.get_completed_url(),
             "cancel_url": self.get_cancel_url(),
+            "extra_context": self.get_extra_context()
         })
         return kwargs
 
