@@ -15,7 +15,7 @@ class UserState(models.Model):
     """
     user = models.OneToOneField(User, null=True)
 
-    data = jsonfield.JSONField(default=dict)
+    data = jsonfield.JSONField(default=dict, blank=True)
 
     @classmethod
     def for_user(cls, user):
@@ -44,7 +44,7 @@ class ActivityState(models.Model):
     # how many sessions have been completed by this user
     completed_count = models.IntegerField(default=0)
 
-    data = jsonfield.JSONField(default=dict)
+    data = jsonfield.JSONField(default=dict, blank=True)
 
     class Meta:
         unique_together = [("user", "activity_key")]
@@ -96,7 +96,7 @@ class ActivitySessionState(models.Model):
     started = models.DateTimeField(default=timezone.now)
     completed = models.DateTimeField(null=True)  # NULL means in progress
 
-    data = jsonfield.JSONField(default=dict)
+    data = jsonfield.JSONField(default=dict, blank=True)
 
     class Meta:
         unique_together = [("activity_state", "started")]
