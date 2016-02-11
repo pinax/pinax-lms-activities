@@ -25,10 +25,7 @@ class BaseProxy(object):
         return "proxy_{}".format("-".join(key))
 
     def get(self):
-        identifier = self.request.session.get(self.get_session_key())
-        if identifier is None:
-            return None
-        return self.lookup(identifier)
+        return self.lookup(self.request.session.get(self.get_session_key()))
 
     def ensure_exists(self):
         if not self.exists:
@@ -58,7 +55,10 @@ class ActivityState(BaseProxy):
         return super(ActivityState, self).get_session_key(extra)
 
     def lookup(self, identifier):
-        return next(iter(self.model.objects.filter(pk=identifier)), None)
+        if identifier is not None:
+            return next(iter(self.model.objects.filter(pk=identifier)), None)
+        if self.request.user.is_authenticated():
+            return next(iter(self.model.objects.filter(user=self.user, activity_key=self.activity_key)), None)
 
     def create(self):
         kwargs = {
