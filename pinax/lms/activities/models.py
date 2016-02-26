@@ -38,7 +38,7 @@ class ActivityState(models.Model):
     """
 
     user = models.ForeignKey(User, null=True)
-    activity_key = models.CharField(max_length=50)
+    activity_key = models.CharField(max_length=300)
     activity_class_path = models.CharField(max_length=300)
 
     # how many sessions have been completed by this user
