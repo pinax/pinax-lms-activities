@@ -44,7 +44,7 @@ Running the Tests
 Documentation
 --------------
 
-The pinax-lms-activities documentation is currently under construction. If you would like to help us write documentation, please join our Slack team and let us know! The Pinax documentation is available at http://pinaxproject.com/pinax/.
+The ``pinax-lms-activities`` documentation is currently under construction. If you would like to help us write documentation, please join our Slack team and let us know! The Pinax documentation is available at http://pinaxproject.com/pinax/.
 
 Contribute
 ----------------
