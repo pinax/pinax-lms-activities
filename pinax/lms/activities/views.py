@@ -48,7 +48,6 @@ class ActivityMixin(object):
         return kwargs
 
     def setup(self, *args, **kwargs):
-        print("@@@", kwargs)
         if not hasattr(self, "activity_key"):
             self.activity_key = kwargs.get("key")
         self.activity_class_path = hookset.activity_class_path(*args, **kwargs)
@@ -59,7 +58,6 @@ class ActivityMixin(object):
 
 
 class ActivityView(ActivityMixin, View):
-    activity_key = None
     template_name = "pinax/lms/activities/activity.html"
     base_template_name = "pinax/lms/activities/base.html"
 
