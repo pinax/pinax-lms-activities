@@ -80,10 +80,9 @@ class ActivityView(View):
         if self.activity.singleton:
             return self.post(request, *args, **kwargs)
         else:
-            return render(request, self.template_name, {
-                "activity": self.activity,
-                **self.get_extra_context()
-            })
+            ctx = {"activity": self.activity}
+            ctx.update(self.get_extra_context())
+            return render(request, self.template_name, ctx)
 
     def post(self, request, *args, **kwargs):
         if self.activity_state.progression == "completed":
