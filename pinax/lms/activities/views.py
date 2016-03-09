@@ -1,6 +1,6 @@
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic import View
 
 from django.contrib.auth.models import User
@@ -10,16 +10,16 @@ from account.decorators import login_required
 from .hooks import hookset
 from .proxies import ActivityState
 from .models import ActivitySessionState
-from .signals import (
-    activity_start as activity_start_signal,
-    activity_play as activity_play_signal
-)
+# from .signals import (
+#     activity_start as activity_start_signal,
+#     activity_play as activity_play_signal
+# )
 from .utils import load_path_attr
 
 
-class ActivityMixin(object):
-
+class ActivityView(View):
     activity_key = None
+    template_name = "pinax/lms/activities/activity.html"
     base_template_name = "pinax/lms/activities/base.html"
 
     def get_activity_class(self):
@@ -32,34 +32,32 @@ class ActivityMixin(object):
             activity_class_path=self.activity_class_path,
         )
 
-    def get_cancel_url(self):
-        return reverse("dashboard")
-
-    def get_completed_url(self):
-        return reverse("dashboard")
-
+    # @@@ this is overridden in module case but we'll need it for non-module case
+    # @@@ when we get back to working on it
     def get_activity_url(self):
         return reverse("activity", kwargs=dict(activity_key=self.activity_key))
 
+    # @@@ this is overridden in module case but we'll need it for non-module case
+    # @@@ when we get back to working on it
+    def get_session_url(self):
+        pass  # to implement
+
     def get_activity(self):
         return self.activity_class(
-            self.activity_state.latest,
             self.activity_state,
             **self.get_activity_kwargs()
         )
 
     def get_extra_context(self, **kwargs):
         kwargs.update({
-            "base_template": self.base_template_name
+            "base_template": self.base_template_name,
+            "activity_url": self.get_activity_url(),
         })
         return kwargs
 
     def get_activity_kwargs(self, **kwargs):
         kwargs.setdefault("parameters", {})
         kwargs.update({
-            "activity_url": self.get_activity_url(),
-            "completed_url": self.get_completed_url(),
-            "cancel_url": self.get_cancel_url(),
             "extra_context": self.get_extra_context()
         })
         return kwargs
@@ -75,36 +73,78 @@ class ActivityMixin(object):
             raise Http404
         self.activity_class = self.get_activity_class()
         self.activity_state = self.get_activity_state()
-        return super(ActivityMixin, self).dispatch(request, *args, **kwargs)
-
-
-class ActivityView(ActivityMixin, View):
+        self.activity = self.get_activity()
+        return super(ActivityView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        activity = self.get_activity()
-        if self.activity_state.progression == "start":  # Must mean you are just starting out
-            return render(request, "pinax/lms/activities/start_activity.html", {"activity": activity})
-        activity_play_signal.send(sender=ActivityView, activity_key=self.activity_key, activity_session_state=self.activity_state.latest, request=self.request)
-        return activity.handle_get_request(self.request)
+        if self.activity.singleton:
+            return self.post(request, *args, **kwargs)
+        else:
+            return render(request, self.template_name, {
+                "activity": self.activity,
+                **self.get_extra_context()
+            })
 
     def post(self, request, *args, **kwargs):
-        return getattr(self, "_{}".format(self.activity_state.progression))()
+        if self.activity_state.progression == "completed":
+            return redirect(self.get_activity_url())
+        else:
+            self.activity_state.ensure_exists()
+            session = self.activity_state.latest
+            return redirect(self.get_session_url(session))
 
-    def _continue(self):
-        activity = self.get_activity()
-        return activity.handle_post_request(self.request)
 
-    def _start(self):
-        self.activity_state.ensure_exists()
-        activity_start_signal.send(sender=ActivityView, activity_key=self.activity_key, activity_state=self.activity_state, request=self.request)
-        return redirect(self.get_activity_url())
+class ActivitySessionView(View):
 
-    def _repeat(self):
-        activity_start_signal.send(sender=ActivityView, activity_key=self.activity_key, activity_state=self.activity_state, request=self.request)
-        return redirect(self.get_activity_url())
+    base_template_name = "pinax/lms/activities/base.html"
 
-    def _completed(self):
-        return redirect(self.get_completed_url())
+    def get_activity_state(self):
+        return ActivityState(
+            self.request,
+            activity_key=self.activity_key,
+            activity_class_path=self.activity_class_path,
+        )
+
+    def get_activity(self):
+        return self.activity_class(
+            self.activity_state,
+            **self.get_activity_kwargs()
+        )
+
+    def get_extra_context(self, **kwargs):
+        kwargs.update({
+            "base_template": self.base_template_name,
+            "activity_url": self.get_activity_url(),
+        })
+        return kwargs
+
+    def get_activity_kwargs(self, **kwargs):
+        kwargs.setdefault("parameters", {})
+        kwargs.update({
+            "extra_context": self.get_extra_context()
+        })
+        return kwargs
+
+    def dispatch(self, request, *args, **kwargs):
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
+        self.session = get_object_or_404(ActivitySessionState, pk=kwargs["session_pk"])
+        if not hasattr(self, "activity_key"):
+            self.activity_key = kwargs.get("key")
+        self.activity_class_path = hookset.activity_class_path(*args, **kwargs)
+        if self.activity_class_path is None:
+            raise Http404
+        self.activity_class = self.get_activity_class()
+        self.activity_state = self.get_activity_state()
+        self.activity = self.get_activity()
+        return super(ActivitySessionView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        return self.activity.handle_get_request(request, self.session, self.get_session_url(self.session))
+
+    def post(self, request, *args, **kwargs):
+        return self.activity.handle_post_request(request, self.session, self.get_session_url(self.session))
 
 
 @login_required

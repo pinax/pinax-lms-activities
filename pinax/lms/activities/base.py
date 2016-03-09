@@ -3,48 +3,38 @@
 from django.shortcuts import redirect, render
 
 from .forms import SurveyForm
-from .hooks import hookset
 from .signals import activity_completed
 
 
 class ActivityType(object):
 
     template_name = None
+    singleton = False
     repeatable = True
 
-    def __init__(self, session_state, activity_state, title, description, parameters, activity_url, completed_url, cancel_url, extra_context):
+    def __init__(self, activity_state, title, description, parameters, extra_context):
         self.activity_state = activity_state
-        self.session_state = session_state
         self.title = title
         self.description = description
         self.parameters = parameters
-        self.activity_url = activity_url
-        self.completed_url = completed_url
-        self.cancel_url = cancel_url
         self.extra_context = extra_context
         self.setup()
 
     def setup(self):
         pass
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, session_state, **kwargs):
         kwargs.update({
             "title": self.title,
             "description": self.description,
             "help_text": getattr(self, "help_text", None),
-            "cancel_url": self.cancel_url
         })
         kwargs.update(self.extra_context)
         return kwargs
 
-    def success_message(self, request):
-        hookset.success_message(request, self)
-
-    def already_completed_message(self, request):
-        hookset.already_completed_message(request, self)
-
-    def render(self, request, **kwargs):
-        return render(request, self.template_name, self.get_context_data(**kwargs))
+    def completed_sessions(self):
+        # @@@ move on to model and proxy
+        return self.activity_state.all_sessions.filter(completed__isnull=False).order_by("-started")
 
 
 class Survey(ActivityType):
