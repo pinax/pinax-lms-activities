@@ -17,13 +17,7 @@ from .models import ActivitySessionState
 from .utils import load_path_attr
 
 
-class ActivityView(View):
-    activity_key = None
-    template_name = "pinax/lms/activities/activity.html"
-    base_template_name = "pinax/lms/activities/base.html"
-
-    def get_activity_class(self):
-        return load_path_attr(self.activity_class_path)
+class ActivityMixin(object):
 
     def get_activity_state(self):
         return ActivityState(
@@ -32,18 +26,9 @@ class ActivityView(View):
             activity_class_path=self.activity_class_path,
         )
 
-    # @@@ this is overridden in module case but we'll need it for non-module case
-    # @@@ when we get back to working on it
-    def get_activity_url(self):
-        return reverse("activity", kwargs=dict(activity_key=self.activity_key))
-
-    # @@@ this is overridden in module case but we'll need it for non-module case
-    # @@@ when we get back to working on it
-    def get_session_url(self):
-        pass  # to implement
-
     def get_activity(self):
-        return self.activity_class(
+        activity_class = self.get_activity_class()
+        return activity_class(
             self.activity_state,
             **self.get_activity_kwargs()
         )
@@ -62,18 +47,35 @@ class ActivityView(View):
         })
         return kwargs
 
-    def dispatch(self, request, *args, **kwargs):
-        self.request = request
-        self.args = args
-        self.kwargs = kwargs
-        if self.activity_key is None:
+    def setup(self, *args, **kwargs):
+        if not hasattr(self, "activity_key"):
             self.activity_key = kwargs.get("key")
         self.activity_class_path = hookset.activity_class_path(*args, **kwargs)
         if self.activity_class_path is None:
             raise Http404
-        self.activity_class = self.get_activity_class()
         self.activity_state = self.get_activity_state()
         self.activity = self.get_activity()
+
+
+class ActivityView(ActivityMixin, View):
+    template_name = "pinax/lms/activities/activity.html"
+    base_template_name = "pinax/lms/activities/base.html"
+
+    def get_activity_class(self):
+        return load_path_attr(self.activity_class_path)
+
+    # @@@ this is overridden in module case but we'll need it for non-module case
+    # @@@ when we get back to working on it
+    def get_activity_url(self):
+        return reverse("activity", kwargs=dict(activity_key=self.activity_key))
+
+    # @@@ this is overridden in module case but we'll need it for non-module case
+    # @@@ when we get back to working on it
+    def get_session_url(self):
+        pass  # to implement
+
+    def dispatch(self, request, *args, **kwargs):
+        self.setup(*args, **kwargs)
         return super(ActivityView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
@@ -93,50 +95,13 @@ class ActivityView(View):
             return redirect(self.get_session_url(session))
 
 
-class ActivitySessionView(View):
+class ActivitySessionView(ActivityMixin, View):
 
     base_template_name = "pinax/lms/activities/base.html"
 
-    def get_activity_state(self):
-        return ActivityState(
-            self.request,
-            activity_key=self.activity_key,
-            activity_class_path=self.activity_class_path,
-        )
-
-    def get_activity(self):
-        return self.activity_class(
-            self.activity_state,
-            **self.get_activity_kwargs()
-        )
-
-    def get_extra_context(self, **kwargs):
-        kwargs.update({
-            "base_template": self.base_template_name,
-            "activity_url": self.get_activity_url(),
-        })
-        return kwargs
-
-    def get_activity_kwargs(self, **kwargs):
-        kwargs.setdefault("parameters", {})
-        kwargs.update({
-            "extra_context": self.get_extra_context()
-        })
-        return kwargs
-
     def dispatch(self, request, *args, **kwargs):
-        self.request = request
-        self.args = args
-        self.kwargs = kwargs
         self.session = get_object_or_404(ActivitySessionState, pk=kwargs["session_pk"])
-        if not hasattr(self, "activity_key"):
-            self.activity_key = kwargs.get("key")
-        self.activity_class_path = hookset.activity_class_path(*args, **kwargs)
-        if self.activity_class_path is None:
-            raise Http404
-        self.activity_class = self.get_activity_class()
-        self.activity_state = self.get_activity_state()
-        self.activity = self.get_activity()
+        self.setup(*args, **kwargs)
         return super(ActivitySessionView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
