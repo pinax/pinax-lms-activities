@@ -100,7 +100,7 @@ class ActivitySessionView(ActivityMixin, View):
     base_template_name = "pinax/lms/activities/base.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.session = get_object_or_404(ActivitySessionState, pk=kwargs["session_pk"])
+        self.session = get_object_or_404(ActivitySessionState, activity_state__user=request.user, pk=kwargs["session_pk"])
         self.setup(*args, **kwargs)
         return super(ActivitySessionView, self).dispatch(request, *args, **kwargs)
 
