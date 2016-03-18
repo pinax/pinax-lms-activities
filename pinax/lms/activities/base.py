@@ -11,6 +11,8 @@ class ActivityType(object):
     template_name = None
     singleton = False
     repeatable = True
+    complete_session_label = "Finish and Submit"
+    save_session_label = "Save for Later"
 
     def __init__(self, activity_state, title, description, parameters, extra_context):
         self.activity_state = activity_state
@@ -28,6 +30,8 @@ class ActivityType(object):
             "title": self.title,
             "description": self.description,
             "help_text": getattr(self, "help_text", None),
+            "complete_session_label": self.complete_session_label,
+            "save_session_label": self.save_session_label,
         })
         kwargs.update(self.extra_context)
         return kwargs
