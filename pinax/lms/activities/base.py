@@ -1,5 +1,4 @@
 # coding: utf-8
-
 from django.shortcuts import redirect, render
 
 from .forms import SurveyForm

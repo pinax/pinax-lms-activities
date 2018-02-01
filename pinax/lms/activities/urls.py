@@ -2,6 +2,8 @@ from django.conf.urls import url
 
 from . import views
 
+app_name = "pinax_lms_activities"
+
 urlpatterns = [
     url(r"(?P<key>[\w\-]+)/start/$", views.activity_start, name="activity_start"),
     url(r"(?P<key>[\w\-]+)/play/$", views.activity_play, name="activity_play"),

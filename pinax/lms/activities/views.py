@@ -1,9 +1,8 @@
-from django.core.urlresolvers import reverse
+from django.contrib.auth.models import User
 from django.http import Http404
 from django.shortcuts import redirect, render, get_object_or_404
+from django.urls import reverse
 from django.views.generic import View
-
-from django.contrib.auth.models import User
 
 from account.decorators import login_required
 

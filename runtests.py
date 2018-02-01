@@ -21,6 +21,10 @@ DEFAULT_SETTINGS = dict(
             "NAME": ":memory:",
         }
     },
+    MIDDLEWARE=[
+        "django.contrib.sessions.middleware.SessionMiddleware",
+        "django.contrib.auth.middleware.AuthenticationMiddleware",
+    ],
     SITE_ID=1,
     ROOT_URLCONF="pinax.lms.activities.tests.urls",
     SECRET_KEY="notasecret",

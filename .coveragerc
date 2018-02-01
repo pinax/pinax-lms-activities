@@ -1,7 +1,0 @@
-[run]
-source = pinax
-omit = pinax/lms/activities/tests/*,pinax/lms/activities/admin.py
-branch = 1
-
-[report]
-omit = pinax/lms/activities/tests/*,pinax/lms/activities/admin.py

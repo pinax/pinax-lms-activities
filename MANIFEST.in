@@ -1,5 +1,4 @@
 include AUTHORS
 include LICENSE
-include README.rst
-recursive-include pinax/lms/activities/static *
+include README.md
 recursive-include pinax/lms/activities/templates *

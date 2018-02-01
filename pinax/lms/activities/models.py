@@ -1,7 +1,6 @@
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
-
-from django.contrib.auth.models import User
 
 import jsonfield
 
@@ -13,7 +12,7 @@ class UserState(models.Model):
     """
     this stores the overall state of a particular user.
     """
-    user = models.OneToOneField(User, null=True)
+    user = models.OneToOneField(User, null=True, on_delete=models.SET_NULL)
 
     data = jsonfield.JSONField(default=dict, blank=True)
 
@@ -37,7 +36,7 @@ class ActivityState(models.Model):
     activity across all sessions of that activity.
     """
 
-    user = models.ForeignKey(User, null=True)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     activity_key = models.CharField(max_length=300)
     activity_class_path = models.CharField(max_length=300)
 
@@ -91,7 +90,7 @@ class ActivitySessionState(models.Model):
     doing a particular activity.
     """
 
-    activity_state = models.ForeignKey(ActivityState, related_name="sessions")
+    activity_state = models.ForeignKey(ActivityState, related_name="sessions", on_delete=models.CASCADE)
 
     started = models.DateTimeField(default=timezone.now)
     completed = models.DateTimeField(null=True)  # NULL means in progress
