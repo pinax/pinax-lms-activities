@@ -93,12 +93,12 @@ To install pinax-lms-activities:
     $ pip install pinax-lms-activities
 ```
 
-Add `pinax.lms-activities` to your `INSTALLED_APPS` setting:
+Add `pinax.lms.activities` to your `INSTALLED_APPS` setting:
 
 ```python
     INSTALLED_APPS = [
         # other apps
-        "pinax.lms-activities",
+        "pinax.lms.activities",
     ]
 ```
 
